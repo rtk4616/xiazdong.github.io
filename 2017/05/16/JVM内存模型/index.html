@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>JVM 内存模型 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Java," />
+  
+
+  <meta name="description" content="blog">
+<meta name="keywords" content="blog">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JVM 内存模型">
+<meta property="og:url" content="http://xiazdong.github.io/2017/05/16/JVM内存模型/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="blog">
+<meta property="og:image" content="http://i.imgur.com/1aKmO0o.jpg">
+<meta property="og:updated_time" content="2017-05-16T13:58:22.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="JVM 内存模型">
+<meta name="twitter:description" content="blog">
+<meta name="twitter:image" content="http://i.imgur.com/1aKmO0o.jpg">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#JVM-介绍"><span class="toc-text">JVM 介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#JVM-内存模型"><span class="toc-text">JVM 内存模型</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#对象的那些事"><span class="toc-text">对象的那些事</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#相关虚拟机参数"><span class="toc-text">相关虚拟机参数</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-JVM内存模型" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">JVM 内存模型</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2017.05.16</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+  <span class="article-category">
+    <i class="icon-list"></i>
+    <a class="article-category-link" href="/categories/Java/">Java</a>
+  </span>
+
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><blockquote>
+<p>本文内容大多来自《深入理解Java虚拟机》，但是经过整理，语言更加简练。</p>
+</blockquote>
+<p>本篇为JVM入门系列的第一篇。本系列一共分为：</p>
+<ol>
+<li>JVM 内存模型。</li>
+<li>垃圾收集算法。</li>
+<li>类加载机制。</li>
+</ol>
+<h2 id="JVM-介绍"><a href="#JVM-介绍" class="headerlink" title="JVM 介绍"></a>JVM 介绍</h2><p>JVM(Java Virtual Machine)是Java程序员很熟悉的名字，但是他不只局限于Java语言，实际上JVM还支持其他语言运行在JVM上。</p>
+<p>总的来说，JVM具有以下两个特性：</p>
+<ol>
+<li><strong>跨平台</strong>：Java程序员应该很清楚这一点，由于JVM，Java语言能够实现”Write Once, Run Anywhere”。</li>
+<li><strong>跨语言</strong>：近年来出现了很多基于JVM的语言，比如 Groovy, Scala 等，之所以称为”基于JVM的语言”是因为JVM的输入其实是字节码格式的文件(而不是Java程序)，而这些语言经过各自编译器编译后变成了字节码格式文件，因此能够在JVM上运行。</li>
+</ol>
+<p>虚拟机其实有很多，比如 Sun Hotspot VM(目前所说的JVM就是这个)，Dalvik VM(Android 的虚拟机)，JRocket VM(另一款JVM，目前也被Oracle收购)。</p>
+<p>JVM 分为 Client 模式和 Server 模式，可以用 <code>java -version</code> 查看。</p>
+<p>JVM 是基于栈的体系结构(其他还有累加器的体系结构、寄存器-寄存器的体系结构等)，这就限制了字节码指令的输入格式，比如 pop 指令表示将栈顶元素出栈，iadd 指令表示将栈顶两个元素相加后再放入栈顶(pop,iadd都是字节码指令)。</p>
+<h2 id="JVM-内存模型"><a href="#JVM-内存模型" class="headerlink" title="JVM 内存模型"></a>JVM 内存模型</h2><p><img src="http://i.imgur.com/1aKmO0o.jpg" alt="JVM 内存模型图"></p>
+<p> JVM拥有自己的内存空间，这块内存空间可以划分成以下几大区域：</p>
+<ol>
+<li><strong>程序计数器</strong>(Program Counter Register): <strong>线程私有</strong>。值为一个整数，表示当前正在执行的字节码指令的地址。</li>
+<li><strong>虚拟机栈</strong>(VM Stack): <strong>线程私有</strong>。他是一个栈，每个元素是一个栈帧(Stack Frame)，一个栈帧表示一个方法调用的状态，栈顶的栈帧为当前正在执行的方法的栈帧。</li>
+<li><strong>本地方法栈</strong>(Native Method Stack): <strong>线程私有</strong>。与虚拟机栈的唯一区别是虚拟机栈中所说的方法是Java方法，而本地方法栈中的方法是Native方法。Hotspot将虚拟机栈和本地方法栈合二为一，即在Hotspot中只有虚拟机栈，没有本地方法栈。</li>
+<li><strong>堆</strong>(Heap): <strong>线程共享</strong>。存放几乎所有的对象实例和数组。他也被称为”GC堆”，因为堆是垃圾收集器的主要管理区域。为了使分配内存和回收内存更方便，堆被分为：<ul>
+<li><strong>新生代</strong>(Young Generation)：之所以称为新生代，是因为每次GC时这块区域的对象都有大批死去，即来得快去得也快(IBM统计约为98%的对象死去)。这部分的垃圾收集也称为 Young GC/Minor GC。新生代区可以继续分为 Eden 区，From Survivor 区，To Survivor 区(即一块 Eden 区，两块 Survivor 区)，From Survivor 区和 To Survivor 区只能使用一个，不能同时使用。一般刚创建的对象被分配在年轻代的 Eden 区(例外是如果一个对象很大，以至于在年轻代的 Eden 区放不下，那么直接进入老年代)，熬过一个 Young GC 后进入 Survivor 区。当年轻代的对象熬过若干个 Young GC 后进入老年代（因为年纪大了）。</li>
+<li><strong>老年代</strong>(Tenured Generation)：之所以称为老年代，是因为每次GC时这块区域的对象存活率较高。这部分的垃圾收集也称为 Full GC/Major GC。一般来说年轻代的空间比老年带的空间小。</li>
+<li>对于上面不同类型的堆内存都存在不同的GC算法，因此这种GC算法称为”分代回收算法”。Young GC 比 Major GC 频率更高，速度更快。</li>
+<li>当多个线程同时分配对象时，为了线程安全，需要对整个堆加锁，这很影响性能(锁的粒度太大)，因此提出了 TLAB(Thread Local Allocation Buffers)，特点是为每个线程在Eden区分配一个缓冲区，每个线程只使用自己的TLAB，等到空间用完了再使用全局锁。</li>
+</ul>
+</li>
+<li><strong>方法区</strong>(Method Area): <strong>线程共享</strong>。存储类元数据、常量、静态变量。Hotspot将其称为永久代(Permanent Generation)，目的是为了表示这块区域的数据一旦生成就不太改变(虽然不是一直不变)，但是这部分区域也需要GC。运行时常量池(Runtime Constant Pool)是方法区的一部分，用来存放符号引用，常量，直接引用等。JDK 1.7开始，字符串常量池从方法区中移出。</li>
+</ol>
+<h3 id="对象的那些事"><a href="#对象的那些事" class="headerlink" title="对象的那些事"></a>对象的那些事</h3><blockquote>
+<p>问题1：新创建的对象如何在堆中分配内存？</p>
+</blockquote>
+<ol>
+<li>若堆中内存是规整的，即可以有一道分界线来划分出两块区域，一块是已分配的内存，另一块是未分配的内存，则使用”<strong>指针碰撞</strong>“(Bump the Pointer)，即用指针来作为分界线。</li>
+<li>若堆中内存是不规整的，则使用”<strong>空间列表</strong>“(Free List)，即用一个列表记录未分配的内存，列表的每个元素为一块未分配的内存，包含起始地址和长度。若要分配对象，则只需要在空间列表中找出一个足够大的区域即可。</li>
+</ol>
+<p>堆是否规整和垃圾收集器采用的GC算法有关，即回收之后是否对堆内存进行压缩整理。</p>
+<blockquote>
+<p>问题2：如何找出对象的类型？</p>
+</blockquote>
+<p>对象实例可以划分为对象头、实例数据、对齐填充。对象头中包含了很多信息，比如对象的hashcode、类型指针等，其中类型指针就是指向方法区的类元数据。</p>
+<h2 id="相关虚拟机参数"><a href="#相关虚拟机参数" class="headerlink" title="相关虚拟机参数"></a>相关虚拟机参数</h2><ul>
+<li><code>-Xmx2g</code>: 堆的最大允许内存为2G。</li>
+<li><code>-Xms2m</code>: 堆的最小允许内存为2M。</li>
+<li><code>-Xmn1m</code>: 堆中年轻代的内存为1M。</li>
+<li><code>-XX:PermSize=128m</code>: 永久代大小为128M。</li>
+<li><code>-XX:MaxPermSize=128m</code>: 永久代最大允许128M。</li>
+<li><code>-Xss128k</code>: 虚拟机栈为128K。</li>
+<li><code>-XX:SurvivorRatio=8</code>: 年轻代中Eden区与Survivor区的容量比值为8。</li>
+<li><code>-XX:PrintGCDetails</code>: 每次GC时输出日志。</li>
+<li><code>-XX:+HeapDumpOnOutOfMemoryError</code>: 在OOM时Dump出堆的日志文件。</li>
+<li><code>-XX:+DisableExplicitGC</code>: 禁用显式GC，即忽略程序中调用的<code>System.gc()</code>。</li>
+</ul>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2017/05/16/Android图像处理－像素化的原理及实现/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="hide pull-right" href="/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>Android图像处理 - 高斯模糊的原理及实现 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="前言高斯模糊是图像处理中几乎每个程序员都或多或少听过的名词，但是对其原理大家可能并不了解，只知道通过高斯模糊能实现图像毛玻璃效果。 本文首先介绍图像处理中最基本的概念：卷积；随后介绍高斯模糊的核心内容：高斯滤波器；接着，我们从头实现了一个Java版本的高斯模糊算法，以及实现RenderScript版本。由于我们自己实现的Java版本的高斯模糊算法的效率太低，因此最后介绍比较有名的高斯模糊的开源项目">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android图像处理 - 高斯模糊的原理及实现">
+<meta property="og:url" content="http://xiazdong.github.io/2017/04/30/高斯模糊/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="前言高斯模糊是图像处理中几乎每个程序员都或多或少听过的名词，但是对其原理大家可能并不了解，只知道通过高斯模糊能实现图像毛玻璃效果。 本文首先介绍图像处理中最基本的概念：卷积；随后介绍高斯模糊的核心内容：高斯滤波器；接着，我们从头实现了一个Java版本的高斯模糊算法，以及实现RenderScript版本。由于我们自己实现的Java版本的高斯模糊算法的效率太低，因此最后介绍比较有名的高斯模糊的开源项目">
+<meta property="og:image" content="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-convolution-01.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-convolution-02.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-two_dimension_gussian.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-one_dimension_gussian.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-gussian_formula.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-gussian_blur.jpg">
+<meta property="og:image" content="https://github.com/gogopop/BlurKit-Android/raw/master/.repo/demo.gif">
+<meta property="og:updated_time" content="2017-05-16T13:58:22.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android图像处理 - 高斯模糊的原理及实现">
+<meta name="twitter:description" content="前言高斯模糊是图像处理中几乎每个程序员都或多或少听过的名词，但是对其原理大家可能并不了解，只知道通过高斯模糊能实现图像毛玻璃效果。 本文首先介绍图像处理中最基本的概念：卷积；随后介绍高斯模糊的核心内容：高斯滤波器；接着，我们从头实现了一个Java版本的高斯模糊算法，以及实现RenderScript版本。由于我们自己实现的Java版本的高斯模糊算法的效率太低，因此最后介绍比较有名的高斯模糊的开源项目">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-convolution-01.png">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#卷积"><span class="toc-text">卷积</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#滤波器"><span class="toc-text">滤波器</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#均值滤波器"><span class="toc-text">均值滤波器</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#高斯滤波器"><span class="toc-text">高斯滤波器</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#高斯模糊的实现"><span class="toc-text">高斯模糊的实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Java版本"><span class="toc-text">Java版本</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#RenderScript版本"><span class="toc-text">RenderScript版本</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#开源项目"><span class="toc-text">开源项目</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#BlurKit-Android"><span class="toc-text">BlurKit-Android</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Blurry"><span class="toc-text">Blurry</span></a></li></ol></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-高斯模糊" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">Android图像处理 - 高斯模糊的原理及实现</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2017.04.30</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>高斯模糊是图像处理中几乎每个程序员都或多或少听过的名词，但是对其原理大家可能并不了解，只知道通过高斯模糊能实现图像毛玻璃效果。</p>
+<p>本文首先介绍图像处理中最基本的概念：卷积；随后介绍高斯模糊的核心内容：高斯滤波器；接着，我们从头实现了一个Java版本的高斯模糊算法，以及实现RenderScript版本。由于我们自己实现的Java版本的高斯模糊算法的效率太低，因此最后介绍比较有名的高斯模糊的开源项目：<a href="https://github.com/wasabeef/Blurry" target="_blank" rel="external">Blurry</a>以及<a href="https://github.com/gogopop/BlurKit-Android" target="_blank" rel="external">BlurKit-Android</a>。 </p>
+<p><a href="https://github.com/xiazdong/BlurDemo" target="_blank" rel="external">BlurDemo</a>是本文的配套Demo：</p>
+<ul>
+<li>Demo1：Java版本的高斯模糊的简单实现。</li>
+<li>Demo2：RenderScript的高斯模糊实现。</li>
+<li>Demo3：BlurKit-Android的基本使用。</li>
+<li>Demo4：Blurry的基本使用。</li>
+</ul>
+<h2 id="卷积"><a href="#卷积" class="headerlink" title="卷积"></a>卷积</h2><p>本文只讨论图像，而图像可以表示为二维矩阵，其中每个元素为ARGB像素值，因此这里讨论二维矩阵的卷积操作。卷积（Convolution）是图像处理中最基本的操作，就是一个二维矩阵A（M*N）和一个二维矩阵B（m*n）做若干操作，生成一个新的二维矩阵C（M*N），其中m和n远小于M和N，B称为卷积核（kernel），又称滤波器矩阵或模板。</p>
+<p>这里举个卷积的例子，如图：</p>
+<p><img src="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-convolution-01.png" alt=""> </p>
+<p>上图中，最左边的是源矩阵（8*8），中间是卷积核（3*3，半径为1），最右边是通过对前面两个矩阵做卷积生成的结果矩阵。图中，如果我们要求出结果矩阵中第二行第二列的元素的值，则把卷积核的中心元素（值为0）和源矩阵的第二行第二列（值为6）对齐，然后求加权和，即图中的公式，最后得到-3。</p>
+<p>我们再举一个例子：</p>
+<p><img src="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-convolution-02.jpg" alt=""></p>
+<p>上图也展示了如何做卷积的过程，比如要求出结果矩阵中第一行第一列的值，则把卷积核的中心对准源矩阵的第一行第一列，发现部分区域超出源矩阵的范围了（图中红色部分），解决方法有很多，这里的方案是：用边界值填充。接着做加权和，结果为-5。接着用同样的方法依次计算结果矩阵的每个元素即可。</p>
+<p>通常来说卷积核需要满足：</p>
+<ul>
+<li>宽和高都为奇数，这样才会有半径和中心的概念。</li>
+<li>元素总和为1。</li>
+</ul>
+<h2 id="滤波器"><a href="#滤波器" class="headerlink" title="滤波器"></a>滤波器</h2><h3 id="均值滤波器"><a href="#均值滤波器" class="headerlink" title="均值滤波器"></a>均值滤波器</h3><p>均值滤波器（Mean Filter）是最简单的一种滤波器，它是最粗糙的一种模糊图像的方法，高斯滤波是均值滤波的高级版本。实际上不同的滤波器就是通过改变卷积核（滤波器），从而改变最后的结果矩阵，中间步骤都一样，都是求加权和。均值滤波器的卷积核通常是m*m的矩阵，其中每个元素为1/(m^2)，可以看出卷积核的元素总和为1。比如3*3的均值滤波器，卷积核的每个元素就是1/9。</p>
+<h3 id="高斯滤波器"><a href="#高斯滤波器" class="headerlink" title="高斯滤波器"></a>高斯滤波器</h3><p>高斯滤波器是均值滤波器的高级版本，唯一的区别在于，均值滤波器的卷积核的每个元素都相同，而高斯滤波器的卷积核的元素服从高斯分布。</p>
+<p>高斯滤波器是基于二维的高斯分布函数，因此首先介绍二维高斯分布函数。二维高斯分布函数和图如下：</p>
+<p><img src="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-two_dimension_gussian.png" alt=""></p>
+<p>其中x和y表示卷积核中某个元素横坐标和纵坐标距离中心点的距离。sigma控制曲线的平缓程度，值越大，越平缓，最高点越低。我们可以轻易看出当x=0且y=0时值最大，即卷积核的中心点权重最大。</p>
+<p>比如卷积核中一个元素距离中心点，横向距离2，纵向距离1，那么x=2,y=1，就能求出该元素的值。当然为了保证卷积核元素总和为1，最后每个元素都需要除以卷积核中所有元素之和。</p>
+<p>怎么确定卷积核的大小呢？确定sigma之后，虽然不管距离中心点多远，该元素的高斯分布函数值总为非负数，但是根据经验，卷积核的半径定为3*sigma，因此宽高为6*sigma+1。</p>
+<p>如果高斯滤波器的卷积核是二维的（m*n），则算法复杂度为O(m*n*M*N)，复杂度较高，因此接下来我们对算法复杂度进行优化。</p>
+<p>一维的高斯分布函数和图如下：</p>
+<p><img src="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-one_dimension_gussian.png" alt=""></p>
+<p>实际上，二维高斯分布函数可以分解为两个一维高斯分布函数相乘，如下：</p>
+<p><img src="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-gussian_formula.png" alt=""></p>
+<p>因此原本的源矩阵和二维卷积核做卷积等价于源矩阵先与1*m的一维卷积核做卷积，再与m*1的一维卷积核做卷积。一维卷积核的半径仍定为3*sigma。此时算法复杂度变为O(2*m*M*N)。</p>
+<h2 id="高斯模糊的实现"><a href="#高斯模糊的实现" class="headerlink" title="高斯模糊的实现"></a>高斯模糊的实现</h2><h3 id="Java版本"><a href="#Java版本" class="headerlink" title="Java版本"></a>Java版本</h3><p>这里实现了简单版本的高斯模糊，通过使用横向和纵向的一维高斯滤波器分别对源矩阵卷积，通过设置sigma的大小能控制图片的模糊程度，值越大越模糊。但是算法速度仍比较慢，建议直接使用RenderScript版本或直接使用成熟的开源项目。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">GussianBlur</span> </span>&#123;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> GussianBlur INSTANCE = <span class="keyword">new</span> GussianBlur();</div><div class="line">    <span class="keyword">private</span> <span class="keyword">int</span> sigma = <span class="number">15</span>;   <span class="comment">//通过调节该参数设置高斯模糊的模糊程度，越大越模糊</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">int</span> radius = <span class="number">3</span> * sigma;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">double</span>[] kernel = <span class="keyword">new</span> <span class="keyword">double</span>[radius + <span class="number">1</span>];  <span class="comment">//kernel[i]表示离中心点距离为i的权重</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="title">GussianBlur</span><span class="params">()</span> </span>&#123;&#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 初始化卷积核</div><div class="line">     * 0.39894 = 1 / (Math.sqrt(2 * PI))</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">initKernel</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">double</span> sum = <span class="number">0.0</span>;</div><div class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; kernel.length; i++) &#123;</div><div class="line">            kernel[i] = <span class="number">0.39894</span> * Math.exp(- (i * i * <span class="number">1.0</span>) / (<span class="number">2.0</span> * sigma * sigma)) / sigma;</div><div class="line">            <span class="keyword">if</span> (i &gt; <span class="number">0</span>) &#123;</div><div class="line">                sum = sum + kernel[i] * <span class="number">2.0</span>;</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                sum = sum + kernel[i];</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; kernel.length; i++) &#123;</div><div class="line">            kernel[i] = kernel[i] / sum;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 高斯模糊</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> Bitmap <span class="title">blur</span><span class="params">(Bitmap bitmap)</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> w = bitmap.getWidth();</div><div class="line">        <span class="keyword">int</span> h = bitmap.getHeight();</div><div class="line">        <span class="keyword">int</span>[] pix = <span class="keyword">new</span> <span class="keyword">int</span>[w * h];</div><div class="line">        bitmap.getPixels(pix, <span class="number">0</span>, w, <span class="number">0</span>, <span class="number">0</span>, w, h);</div><div class="line">        Bitmap tmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);</div><div class="line">        Bitmap result = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);</div><div class="line">        <span class="comment">//横向</span></div><div class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; w * h; i++) &#123;</div><div class="line">            <span class="keyword">int</span> x = i % w;</div><div class="line">            <span class="keyword">int</span> y = i / w;</div><div class="line">            <span class="keyword">double</span>[] sum = <span class="keyword">new</span> <span class="keyword">double</span>[<span class="number">4</span>];</div><div class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> j = -radius; j &lt;= radius; j++) &#123;</div><div class="line">                <span class="keyword">int</span> currentX = Math.min(Math.max(x + j, <span class="number">0</span>), w - <span class="number">1</span>);</div><div class="line">                <span class="keyword">int</span> index = y * w + currentX;</div><div class="line">                <span class="keyword">int</span> a = Color.alpha(pix[index]);</div><div class="line">                <span class="keyword">int</span> r = Color.red(pix[index]);</div><div class="line">                <span class="keyword">int</span> g = Color.green(pix[index]);</div><div class="line">                <span class="keyword">int</span> b = Color.blue(pix[index]);</div><div class="line">                sum[<span class="number">0</span>] = sum[<span class="number">0</span>] + a * kernel[Math.abs(j)];</div><div class="line">                sum[<span class="number">1</span>] = sum[<span class="number">1</span>] + r * kernel[Math.abs(j)];</div><div class="line">                sum[<span class="number">2</span>] = sum[<span class="number">2</span>] + g * kernel[Math.abs(j)];</div><div class="line">                sum[<span class="number">3</span>] = sum[<span class="number">3</span>] + b * kernel[Math.abs(j)];</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">int</span> rc = Color.argb((<span class="keyword">int</span>) sum[<span class="number">0</span>], (<span class="keyword">int</span>) sum[<span class="number">1</span>], (<span class="keyword">int</span>) sum[<span class="number">2</span>], (<span class="keyword">int</span>) sum[<span class="number">3</span>]);</div><div class="line">            tmp.setPixel(x, y, rc);</div><div class="line">        &#125;</div><div class="line">        tmp.getPixels(pix, <span class="number">0</span>, w, <span class="number">0</span>, <span class="number">0</span>, w, h);</div><div class="line">        <span class="comment">//纵向</span></div><div class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; w * h; i++) &#123;</div><div class="line">            <span class="keyword">int</span> x = i % w;</div><div class="line">            <span class="keyword">int</span> y = i / w;</div><div class="line">            <span class="keyword">double</span>[] sum = <span class="keyword">new</span> <span class="keyword">double</span>[<span class="number">4</span>];</div><div class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> j = -radius; j &lt;= radius; j++) &#123;</div><div class="line">                <span class="keyword">int</span> currentY = Math.min(Math.max(y + j, <span class="number">0</span>), h - <span class="number">1</span>);</div><div class="line">                <span class="keyword">int</span> index = currentY * w + x;</div><div class="line">                <span class="keyword">int</span> r = Color.red(pix[index]);</div><div class="line">                <span class="keyword">int</span> g = Color.green(pix[index]);</div><div class="line">                <span class="keyword">int</span> b = Color.blue(pix[index]);</div><div class="line">                <span class="keyword">int</span> a = Color.alpha(pix[index]);</div><div class="line">                sum[<span class="number">0</span>] = sum[<span class="number">0</span>] + a * kernel[Math.abs(j)];</div><div class="line">                sum[<span class="number">1</span>] = sum[<span class="number">1</span>] + r * kernel[Math.abs(j)];</div><div class="line">                sum[<span class="number">2</span>] = sum[<span class="number">2</span>] + g * kernel[Math.abs(j)];</div><div class="line">                sum[<span class="number">3</span>] = sum[<span class="number">3</span>] + b * kernel[Math.abs(j)];</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">int</span> rc = Color.argb((<span class="keyword">int</span>) sum[<span class="number">0</span>], (<span class="keyword">int</span>) sum[<span class="number">1</span>], (<span class="keyword">int</span>) sum[<span class="number">2</span>], (<span class="keyword">int</span>) sum[<span class="number">3</span>]);</div><div class="line">            result.setPixel(x, y, rc);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> result;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">setRadius</span><span class="params">(<span class="keyword">int</span> radius)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.sigma = radius;</div><div class="line">        <span class="keyword">this</span>.radius = <span class="number">3</span> * sigma;</div><div class="line">        <span class="keyword">this</span>.kernel = <span class="keyword">new</span> <span class="keyword">double</span>[<span class="keyword">this</span>.radius + <span class="number">1</span>];</div><div class="line">        initKernel();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> GussianBlur <span class="title">getInstance</span><span class="params">(<span class="keyword">int</span> radius)</span> </span>&#123;</div><div class="line">        INSTANCE.setRadius(radius);</div><div class="line">        <span class="keyword">return</span> INSTANCE;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> GussianBlur <span class="title">getInstance</span><span class="params">()</span> </span>&#123;</div><div class="line">        INSTANCE.setRadius(<span class="number">15</span>);</div><div class="line">        <span class="keyword">return</span> INSTANCE;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>效果如下：</p>
+<p><img src="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-gussian_blur.jpg" alt=""></p>
+<h3 id="RenderScript版本"><a href="#RenderScript版本" class="headerlink" title="RenderScript版本"></a>RenderScript版本</h3><p>RenderScript是Android提出的一个计算密集型任务的高性能框架，能并行的处理任务，他可以充分利用多核CPU和GPU，你不需要管怎么调度你的任务，只需要管任务具体做什么。这里不深入介绍RenderScript，因为RenderScript已经提供了一个实现高斯模糊的类：ScriptIntrinsicBlur。</p>
+<p>实现起来非常简单：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> Bitmap <span class="title">blur</span><span class="params">(Bitmap bmp)</span> </span>&#123;</div><div class="line">    Bitmap result = Bitmap.createBitmap(bmp.getWidth(), bmp.getHeight(), Bitmap.Config.ARGB_8888);</div><div class="line">    RenderScript rs = RenderScript.create(<span class="keyword">this</span>); <span class="comment">//创建RenderScript对象</span></div><div class="line">    ScriptIntrinsicBlur blur = ScriptIntrinsicBlur.create(rs, Element.U8_4(rs)); <span class="comment">//创建高斯模糊脚本对象</span></div><div class="line">    Allocation in = Allocation.createFromBitmap(rs, bmp);  <span class="comment">//输入</span></div><div class="line">    Allocation out = Allocation.createFromBitmap(rs, result); <span class="comment">//输出</span></div><div class="line">    blur.setRadius(<span class="number">25f</span>); <span class="comment">//设置模糊半径</span></div><div class="line">    blur.setInput(in); <span class="comment">//把输入图像传进去</span></div><div class="line">    blur.forEach(out); <span class="comment">//执行，并写入到out</span></div><div class="line">    out.copyTo(result); <span class="comment">//拷贝到Bitmap中</span></div><div class="line">    rs.destroy();</div><div class="line">    <span class="keyword">return</span> result;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="开源项目"><a href="#开源项目" class="headerlink" title="开源项目"></a>开源项目</h2><p>关于Android图像模糊的开源项目有很多，比如<a href="https://github.com/wasabeef/Blurry" target="_blank" rel="external">Blurry</a>是专门针对Bitmap或View做模糊，可以设置模糊的基底色，而且还能对模糊操作异步化；<a href="https://github.com/gogopop/BlurKit-Android" target="_blank" rel="external">BlurKit-Android</a>也能对Bitmap做高斯模糊（内部通过RenderScript实现），但最吸引人的是实现了毛玻璃的遮罩，效果如下：</p>
+<p><img src="https://github.com/gogopop/BlurKit-Android/raw/master/.repo/demo.gif" alt=""></p>
+<p>BlurKit-Android支持的最低版本是Android 4.1（API 16），因此如果应用需要支持的最低版本是4.0，则不能使用该库，Blurry支持的最低版本是3.0。</p>
+<h3 id="BlurKit-Android"><a href="#BlurKit-Android" class="headerlink" title="BlurKit-Android"></a>BlurKit-Android</h3><p>配置过程如下：</p>
+<ul>
+<li>在build.gradle中设置：<code>compile &#39;com.wonderkiln:blurkit:1.0.0&#39;</code>，并在defaultConfig中设置<code>renderscriptTargetApi 24</code>和<code>renderscriptSupportModeEnabled true</code>。</li>
+<li>在Application的onCreate()最开始处加入<code>BlurKit.init(this);</code>。</li>
+</ul>
+<p>配置完成后，通过调用<code>BlurKit.getInstance().blur(Bitmap src, int radius);</code>实现高斯模糊，并会把高斯模糊的结果图写入src，其中0&lt;radius&lt;=25。</p>
+<p>该库还提供了<code>fastBlur()</code>实现速度更快的高斯模糊，和<code>blur()</code>的区别在于，<code>fastBlur()</code>在高斯模糊之前对图片采样，使得图片大小缩小好几倍，从而加快高斯模糊的速度。这种加快速度的方法是合理的，因为高斯模糊并不需要原图像很精确的信息。</p>
+<p>BlurKit-Android最吸引人的是提供高斯模糊的遮罩（BlurLayout），随着遮罩下面的内容的变化，高斯模糊效果也会随之改变。使用如下：</p>
+<figure class="highlight xml"><table><tr><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">com.wonderkiln.blurkit.BlurLayout</span></span></div><div class="line">    <span class="attr">android:id</span>=<span class="string">"@+id/blurLayout"</span></div><div class="line">    <span class="attr">android:layout_width</span>=<span class="string">"150dp"</span></div><div class="line">    <span class="attr">android:layout_height</span>=<span class="string">"150dp"</span>/&gt;</div></pre></td></tr></table></figure>
+<p>该Layout能够实现实时的对该Layout下面的内容做高斯模糊。</p>
+<h3 id="Blurry"><a href="#Blurry" class="headerlink" title="Blurry"></a>Blurry</h3><p>配置方法：在build.gradle中添加<code>compile &#39;jp.wasabeef:blurry:2.1.1&#39;</code>。</p>
+<p>使用方法如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Blurry.with(<span class="keyword">this</span>)</div><div class="line">	  .radius(<span class="number">10</span>)    <span class="comment">//值越大越模糊</span></div><div class="line">	  .sampling(<span class="number">2</span>)   <span class="comment">//对原图像抽样</span></div><div class="line">	  .async()       <span class="comment">//异步</span></div><div class="line">	  .from(Bitmap bmp)   <span class="comment">//对bmp做高斯模糊</span></div><div class="line">	  .into(ImageView view); <span class="comment">//把结果写入ImageView</span></div></pre></td></tr></table></figure>
+<p>总的来说，这两个库都使用起来非常方便。</p>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2017/03/26/减少APK大小/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2017/05/16/Android图像处理－像素化的原理及实现/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>

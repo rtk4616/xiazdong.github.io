@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>Android图像处理-像素化的原理及实现 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="前言像素化（Pixelization），又称马赛克，是图像处理中非常常见的技术，现阶段已经成为了一种创作手段。本文首先会讲解像素化的实现原理，接着会给出Java版的实现，最后介绍马赛克相关的开源项目。 算法介绍马赛克算法首先需要确定马赛克单元的大小，即小方块的大小。马赛克图的每个马赛克单元都是纯色的块，其取值一般为原图中该块区域的颜色的均值（这里的实现为了简化，取了原图中该区域左上角的像素）。马赛">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android图像处理-像素化的原理及实现">
+<meta property="og:url" content="http://xiazdong.github.io/2017/05/16/Android图像处理－像素化的原理及实现/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="前言像素化（Pixelization），又称马赛克，是图像处理中非常常见的技术，现阶段已经成为了一种创作手段。本文首先会讲解像素化的实现原理，接着会给出Java版的实现，最后介绍马赛克相关的开源项目。 算法介绍马赛克算法首先需要确定马赛克单元的大小，即小方块的大小。马赛克图的每个马赛克单元都是纯色的块，其取值一般为原图中该块区域的颜色的均值（这里的实现为了简化，取了原图中该区域左上角的像素）。马赛">
+<meta property="og:image" content="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-pixelate.jpg">
+<meta property="og:image" content="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-circle-pixelate.jpg">
+<meta property="og:updated_time" content="2017-05-16T13:58:22.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android图像处理-像素化的原理及实现">
+<meta name="twitter:description" content="前言像素化（Pixelization），又称马赛克，是图像处理中非常常见的技术，现阶段已经成为了一种创作手段。本文首先会讲解像素化的实现原理，接着会给出Java版的实现，最后介绍马赛克相关的开源项目。 算法介绍马赛克算法首先需要确定马赛克单元的大小，即小方块的大小。马赛克图的每个马赛克单元都是纯色的块，其取值一般为原图中该块区域的颜色的均值（这里的实现为了简化，取了原图中该区域左上角的像素）。马赛">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-pixelate.jpg">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#算法介绍"><span class="toc-text">算法介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#开源项目"><span class="toc-text">开源项目</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-Android图像处理－像素化的原理及实现" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">Android图像处理-像素化的原理及实现</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2017.05.16</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>像素化（Pixelization），又称马赛克，是图像处理中非常常见的技术，现阶段已经成为了一种创作手段。本文首先会讲解像素化的实现原理，接着会给出Java版的实现，最后介绍马赛克相关的开源项目。</p>
+<h2 id="算法介绍"><a href="#算法介绍" class="headerlink" title="算法介绍"></a>算法介绍</h2><p>马赛克算法首先需要确定马赛克单元的大小，即小方块的大小。马赛克图的每个马赛克单元都是纯色的块，其取值一般为原图中该块区域的颜色的均值（这里的实现为了简化，取了原图中该区域左上角的像素）。马赛克单元的大小决定了最后的马赛克图的样子，当值为1时，就是原图。</p>
+<p><img src="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-pixelate.jpg" alt=""></p>
+<p>上图中，最左边的图是原图，中间的图是马赛克图。当然你也可以对图像的某块区域打马赛克，如最右边的图，他只对头部打马赛克。</p>
+<p>算法实现如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">PixelateUtil</span> </span>&#123;</div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 普通图像－&gt;像素图，zoneWidth为像素图的大像素的宽度</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Bitmap <span class="title">pixelate</span><span class="params">(Bitmap bitmap, <span class="keyword">int</span> zoneWidth)</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> pixelate(bitmap, zoneWidth, <span class="number">0</span>, <span class="number">0</span>, bitmap.getWidth(), bitmap.getHeight());</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * 普通图－&gt;像素图，left、top、right、bottom可指定打马赛克区域</div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Bitmap <span class="title">pixelate</span><span class="params">(Bitmap bitmap, <span class="keyword">int</span> zoneWidth, <span class="keyword">int</span> left, <span class="keyword">int</span> top, <span class="keyword">int</span> right, <span class="keyword">int</span> bottom)</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> w = bitmap.getWidth();</div><div class="line">        <span class="keyword">int</span> h = bitmap.getHeight();</div><div class="line">        Bitmap result = bitmap.copy(Bitmap.Config.ARGB_8888, <span class="keyword">true</span>);</div><div class="line">        Canvas canvas = <span class="keyword">new</span> Canvas(result);</div><div class="line">        Paint paint = <span class="keyword">new</span> Paint();</div><div class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = left; i &lt; right; i += zoneWidth) &#123;</div><div class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> j = top; j &lt; bottom; j += zoneWidth) &#123;</div><div class="line">                <span class="keyword">int</span> color = bitmap.getPixel(i, j);</div><div class="line">                paint.setColor(color);</div><div class="line">                <span class="keyword">int</span> gridRight = Math.min(w, i + zoneWidth);</div><div class="line">                <span class="keyword">int</span> gridBottom = Math.min(h, j + zoneWidth);</div><div class="line">                canvas.drawRect(i, j, gridRight, gridBottom, paint);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> result;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>使用方法：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Bitmap result = PixelateUtil.pixelate(bitmap, zoneWidth);  <span class="comment">//对全图打马赛克</span></div><div class="line">Bitmap result = PixelateUtil.pixelate(bitmap, zoneWidth, left, top, right, bottom); <span class="comment">//对指定区域打马赛克</span></div></pre></td></tr></table></figure>
+<h2 id="开源项目"><a href="#开源项目" class="headerlink" title="开源项目"></a>开源项目</h2><p><a href="https://github.com/DanielMartinus/Pixelate" target="_blank" rel="external">Pixelate</a>是实现基本马赛克效果的开源项目，它能够异步对整个或者部分的Bitmap区域打马赛克，处理完后会在OnPixelateListener的onPixelated()中回调，最小的SDK版本为16。</p>
+<p>使用方法如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">new</span> Pixelate(origin)</div><div class="line">    .setArea(<span class="number">0</span>,<span class="number">0</span>,origin.getWidth(),origin.getHeight())  <span class="comment">//设置区域</span></div><div class="line">    .setDensity(<span class="number">12</span>) <span class="comment">//值越大，马赛克单元越小</span></div><div class="line">    .setListener(<span class="keyword">new</span> OnPixelateListener() &#123;</div><div class="line">        <span class="meta">@Override</span></div><div class="line">        <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onPixelated</span><span class="params">(Bitmap bitmap, <span class="keyword">int</span> density)</span> </span>&#123;</div><div class="line">            <span class="comment">//bitmap为马赛克图</span></div><div class="line">            Log.v(TAG, <span class="string">""</span>);</div><div class="line">        &#125;</div><div class="line">    &#125;)</div><div class="line">    .make</div><div class="line">    ();</div></pre></td></tr></table></figure>
+<p><a href="https://github.com/bmaslakov/android-close-pixelate" target="_blank" rel="external">android-close-pixelate</a>能够实现多样式的马赛克效果。使用方法如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Bitmap pixelated = Pixelate.fromBitmap(</div><div class="line">        origin,</div><div class="line">        <span class="keyword">new</span> PixelateLayer.Builder(PixelateLayer.Shape.Circle) <span class="comment">//设置马赛克形状</span></div><div class="line">                .setResolution(<span class="number">30</span>) <span class="comment">//每个像素的密度（如果该值和size值一样，那么圆形之间相邻）</span></div><div class="line">                .setSize(<span class="number">30</span>) <span class="comment">//圆圈的大小</span></div><div class="line">                .build()</div><div class="line">);</div></pre></td></tr></table></figure>
+<p>效果如下：</p>
+<p><img src="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/small-circle-pixelate.jpg" alt=""></p>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2017/04/30/高斯模糊/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2017/05/16/JVM内存模型/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>

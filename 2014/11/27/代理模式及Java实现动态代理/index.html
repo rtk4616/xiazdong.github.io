@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>代理模式及Java实现动态代理 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="设计模式," />
+  
+
+  <meta name="description" content="代理模式定义：给某个对象提供一个代理对象，并由代理对象控制对于原对象的访问，即客户不直接操控原对象，而是通过代理对象间接地操控原对象。  在上图中：  RealSubject 是原对象（本文把原对象称为”委托对象”），Proxy 是代理对象。 Subject 是委托对象和代理对象都共同实现的接口。 Request() 是委托对象和代理对象共同拥有的方法。   要理解代理模式很简单，其实生活当中就存">
+<meta name="keywords" content="设计模式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="代理模式及Java实现动态代理">
+<meta property="og:url" content="http://xiazdong.github.io/2014/11/27/代理模式及Java实现动态代理/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="代理模式定义：给某个对象提供一个代理对象，并由代理对象控制对于原对象的访问，即客户不直接操控原对象，而是通过代理对象间接地操控原对象。  在上图中：  RealSubject 是原对象（本文把原对象称为”委托对象”），Proxy 是代理对象。 Subject 是委托对象和代理对象都共同实现的接口。 Request() 是委托对象和代理对象共同拥有的方法。   要理解代理模式很简单，其实生活当中就存">
+<meta property="og:image" content="http://i.imgur.com/oh3VMNs.gif">
+<meta property="og:updated_time" content="2017-05-16T13:58:22.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="代理模式及Java实现动态代理">
+<meta name="twitter:description" content="代理模式定义：给某个对象提供一个代理对象，并由代理对象控制对于原对象的访问，即客户不直接操控原对象，而是通过代理对象间接地操控原对象。  在上图中：  RealSubject 是原对象（本文把原对象称为”委托对象”），Proxy 是代理对象。 Subject 是委托对象和代理对象都共同实现的接口。 Request() 是委托对象和代理对象共同拥有的方法。   要理解代理模式很简单，其实生活当中就存">
+<meta name="twitter:image" content="http://i.imgur.com/oh3VMNs.gif">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#代理模式"><span class="toc-text">代理模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Java-实现动态代理"><span class="toc-text">Java 实现动态代理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Java-动态代理的内部实现"><span class="toc-text">Java 动态代理的内部实现</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#元编程"><span class="toc-text">元编程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-代理模式及Java实现动态代理" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">代理模式及Java实现动态代理</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2014.11.27</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="代理模式"><a href="#代理模式" class="headerlink" title="代理模式"></a>代理模式</h2><p>定义：给某个对象提供一个代理对象，并由代理对象控制对于原对象的访问，即客户不直接操控原对象，而是通过代理对象间接地操控原对象。</p>
+<p><img src="http://i.imgur.com/oh3VMNs.gif" alt="代理模式UML图"></p>
+<p>在上图中：</p>
+<ul>
+<li>RealSubject 是原对象（本文把原对象称为”委托对象”），Proxy 是代理对象。</li>
+<li>Subject 是委托对象和代理对象都共同实现的接口。</li>
+<li><code>Request()</code> 是委托对象和代理对象共同拥有的方法。 </li>
+</ul>
+<p>要理解代理模式很简单，其实生活当中就存在代理模式：</p>
+<blockquote>
+<p>我们购买火车票可以去火车站买，但是也可以去火车票代售处买，此处的火车票代售处就是火车站购票的代理，即我们在代售点发出买票请求，代售点会把请求发给火车站，火车站把购买成功响应发给代售点，代售点再告诉你。<br>但是代售点只能买票，不能退票，而火车站能买票也能退票，因此代理对象支持的操作可能和委托对象的操作有所不同。</p>
+</blockquote>
+<p>再举一个写程序会碰到的一个例子：</p>
+<blockquote>
+<p>如果现在有一个已有项目（你没有源代码，只能调用它）能够调用 <code>int compute(String exp1)</code> 实现对于后缀表达式的计算，你想使用这个项目实现对于中缀表达式的计算，那么你可以写一个代理类，并且其中也定义一个<code>compute(String exp2)</code>，这个<code>exp2</code>参数是中缀表达式，因此你需要在调用已有项目的 <code>compute()</code> 之前将中缀表达式转换成后缀表达式(Preprocess)，再调用已有项目的<code>compute()</code>，当然你还可以接收到返回值之后再做些其他操作比如存入文件(Postprocess)，这个过程就是使用了代理模式。</p>
+</blockquote>
+<p>在平时用电脑也会碰到代理模式的应用：</p>
+<blockquote>
+<p>远程代理：我们在国内因为GFW，所以不能访问 facebook，我们可以用翻墙（设置代理）的方法访问。访问过程是：<br>(1)用户把HTTP请求发给代理<br>(2)代理把HTTP请求发给web服务器<br>(3)web服务器把HTTP响应发给代理<br>(4)代理把HTTP响应发回给用户</p>
+</blockquote>
+<p>Java 实现上面的UML图的代码（即实现静态代理）为：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ProxyDemo</span> </span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span></span>&#123;</div><div class="line">		RealSubject subject = <span class="keyword">new</span> RealSubject();</div><div class="line">		Proxy p = <span class="keyword">new</span> Proxy(subject);</div><div class="line">		p.request();</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">interface</span> <span class="title">Subject</span></span>&#123;</div><div class="line">	<span class="function"><span class="keyword">void</span> <span class="title">request</span><span class="params">()</span></span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">RealSubject</span> <span class="keyword">implements</span> <span class="title">Subject</span></span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">request</span><span class="params">()</span></span>&#123;</div><div class="line">		System.out.println(<span class="string">"request"</span>);</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Proxy</span> <span class="keyword">implements</span> <span class="title">Subject</span></span>&#123;</div><div class="line">	<span class="keyword">private</span> Subject subject;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="title">Proxy</span><span class="params">(Subject subject)</span></span>&#123;</div><div class="line">		<span class="keyword">this</span>.subject = subject;</div><div class="line">	&#125;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">request</span><span class="params">()</span></span>&#123;</div><div class="line">		System.out.println(<span class="string">"PreProcess"</span>);</div><div class="line">		subject.request();</div><div class="line">		System.out.println(<span class="string">"PostProcess"</span>);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>代理的实现分为：</p>
+<ul>
+<li>静态代理：代理类是在编译时就实现好的。也就是说 Java 编译完成后代理类是一个实际的 class 文件。</li>
+<li>动态代理：代理类是在运行时生成的。也就是说 Java 编译完之后并没有实际的 class 文件，而是在运行时动态生成的类字节码，并加载到JVM中。</li>
+</ul>
+<h2 id="Java-实现动态代理"><a href="#Java-实现动态代理" class="headerlink" title="Java 实现动态代理"></a>Java 实现动态代理</h2><p>在前一节我们已经介绍了静态代理（第一节已经实现）和动态代理，那么在 Java 中是如何实现动态代理，即如何做到在运行时动态的生成代理类呢？</p>
+<p>首先先说明几个词：</p>
+<ul>
+<li>委托类和委托对象：委托类是一个类，委托对象是委托类的实例。</li>
+<li>代理类和代理对象：代理类是一个类，代理对象是代理类的实例。</li>
+</ul>
+<p>Java实现动态代理的大致步骤如下：</p>
+<ol>
+<li>定义一个委托类和公共接口。</li>
+<li>自己定义一个类（调用处理器类，即实现 <code>InvocationHandler</code> 接口），这个类的目的是指定运行时将生成的代理类需要完成的具体任务（包括Preprocess和Postprocess），即代理类调用任何方法都会经过这个调用处理器类（在本文最后一节对此进行解释）。</li>
+<li>生成代理对象（当然也会生成代理类），需要为他指定(1)委托对象(2)实现的一系列接口(3)调用处理器类的实例。因此可以看出一个代理对象对应一个委托对象，对应一个调用处理器实例。</li>
+</ol>
+<p>Java 实现动态代理主要涉及以下几个类：</p>
+<ul>
+<li><code>java.lang.reflect.Proxy</code>: 这是生成代理类的主类，通过 Proxy 类生成的代理类都继承了 Proxy 类，即 <code>DynamicProxyClass extends Proxy</code>。</li>
+<li><code>java.lang.reflect.InvocationHandler</code>: 这里称他为”调用处理器”，他是一个接口，我们动态生成的代理类需要完成的具体内容需要自己定义一个类，而这个类必须实现 InvocationHandler 接口。</li>
+</ul>
+<p>Proxy 类主要方法为：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="comment">//创建代理对象  </span></div><div class="line"><span class="function"><span class="keyword">static</span> Object <span class="title">newProxyInstance</span><span class="params">(ClassLoader loader,Class&lt;?&gt;[] interfaces,InvocationHandler h)</span></span></div></pre></td></tr></table></figure>
+<p>这个静态函数的第一个参数是类加载器对象（即哪个类加载器来加载这个代理类到 JVM 的方法区），第二个参数是接口（表明你这个代理类需要实现哪些接口），第三个参数是调用处理器类实例（指定代理类中具体要干什么）。这个函数是 JDK 为了程序员方便创建代理对象而封装的一个函数，因此你调用<code>newProxyInstance()</code>时直接创建了代理对象（略去了创建代理类的代码）。其实他主要完成了以下几个工作：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> Object <span class="title">newProxyInstance</span><span class="params">(ClassLoader loader,Class&lt;?&gt;[] interfaces,InvocationHandler handler)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="comment">//1. 根据类加载器和接口创建代理类</span></div><div class="line">    Class clazz = Proxy.getProxyClass(loader, interfaces); </div><div class="line">    <span class="comment">//2. 获得代理类的带参数的构造函数</span></div><div class="line">    Constructor constructor = clazz.getConstructor(<span class="keyword">new</span> Class[] &#123; InvocationHandler.class &#125;);</div><div class="line">    <span class="comment">//3. 创建代理对象，并制定调用处理器实例为参数传入</span></div><div class="line">    Interface Proxy = (Interface)constructor.newInstance(<span class="keyword">new</span> Object[] &#123;handler&#125;);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>Proxy 类还有一些静态方法，比如：</p>
+<ul>
+<li><code>InvocationHandler getInvocationHandler(Object proxy)</code>: 获得代理对象对应的调用处理器对象。</li>
+<li><code>Class getProxyClass(ClassLoader loader, Class[] interfaces)</code>: 根据类加载器和实现的接口获得代理类。</li>
+</ul>
+<p>Proxy 类中有一个映射表，映射关系为：(ClassLoader,(Interfaces,ProxyClass))，可以看出一级key为类加载器，根据这个一级key获得二级映射表，二级key为接口数组，因此可以看出：一个类加载器对象和一个接口数组确定了一个代理类。</p>
+<p>我们写一个简单的例子来阐述 Java 实现动态代理的整个过程：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">DynamicProxyDemo01</span> </span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</div><div class="line">		RealSubject realSubject = <span class="keyword">new</span> RealSubject();<span class="comment">//1.创建委托对象</span></div><div class="line">		ProxyHandler handler = <span class="keyword">new</span> ProxyHandler(realSubject);<span class="comment">//2.创建调用处理器对象</span></div><div class="line">		Subject proxySubject = (Subject)Proxy.newProxyInstance(RealSubject.class.getClassLoader(), RealSubject.class.getInterfaces(), handler);	<span class="comment">//3.动态生成代理对象</span></div><div class="line">		proxySubject.request();	<span class="comment">//4.通过代理对象调用方法</span></div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line">	</div><div class="line"><span class="comment">/**</span></div><div class="line"> * 接口</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">interface</span> <span class="title">Subject</span></span>&#123;</div><div class="line">	<span class="function"><span class="keyword">void</span> <span class="title">request</span><span class="params">()</span></span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * 委托类</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">RealSubject</span> <span class="keyword">implements</span> <span class="title">Subject</span></span>&#123;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">request</span><span class="params">()</span></span>&#123;</div><div class="line">		System.out.println(<span class="string">"====RealSubject Request===="</span>);</div><div class="line">	&#125;</div><div class="line">&#125;</div><div class="line"><span class="comment">/**</span></div><div class="line"> * 代理类的调用处理器</div><div class="line"> */</div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ProxyHandler</span> <span class="keyword">implements</span> <span class="title">InvocationHandler</span></span>&#123;</div><div class="line">	<span class="keyword">private</span> Subject subject;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="title">ProxyHandler</span><span class="params">(Subject subject)</span></span>&#123;</div><div class="line">		<span class="keyword">this</span>.subject = subject;</div><div class="line">	&#125;</div><div class="line">	<span class="meta">@Override</span></div><div class="line">	<span class="function"><span class="keyword">public</span> Object <span class="title">invoke</span><span class="params">(Object proxy, Method method, Object[] args)</span></span></div><div class="line">			<span class="keyword">throws</span> Throwable &#123;</div><div class="line">		System.out.println(<span class="string">"====before===="</span>);<span class="comment">//定义预处理的工作，当然你也可以根据 method 的不同进行不同的预处理工作</span></div><div class="line">		Object result = method.invoke(subject, args);</div><div class="line">		System.out.println(<span class="string">"====after===="</span>);</div><div class="line">		<span class="keyword">return</span> result;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>InvocationHandler 接口中有方法：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"></div><div class="line"><span class="function">Object <span class="title">invoke</span><span class="params">(Object proxy, Method method, Object[] args)</span> <span class="keyword">throws</span> Throwable</span></div></pre></td></tr></table></figure>
+<p>这个函数是在代理对象调用任何一个方法时都会调用的，方法不同会导致第二个参数method不同，第一个参数是代理对象（表示哪个代理对象调用了method方法），第二个参数是 Method 对象（表示哪个方法被调用了），第三个参数是指定调用方法的参数。</p>
+<p>动态生成的代理类具有几个特点：</p>
+<ul>
+<li>继承 Proxy 类，并实现了在<code>Proxy.newProxyInstance()</code>中提供的接口数组。</li>
+<li>public final。</li>
+<li>命名方式为 <code>$ProxyN</code>，其中N会慢慢增加，一开始是 <code>$Proxy1</code>，接下来是<code>$Proxy2</code>…</li>
+<li>有一个参数为 InvocationHandler 的构造函数。这个从 <code>Proxy.newProxyInstance()</code> 函数内部的<code>clazz.getConstructor(new Class[] { InvocationHandler.class })</code> 可以看出。</li>
+</ul>
+<p>Java 实现动态代理的缺点：因为 Java 的单继承特性（每个代理类都继承了 Proxy 类），只能针对接口创建代理类，不能针对类创建代理类。</p>
+<blockquote>
+<p>不难发现，代理类的实现是有很多共性的（重复代码），动态代理的好处在于避免了这些重复代码，只需要关注操作。</p>
+</blockquote>
+<h2 id="Java-动态代理的内部实现"><a href="#Java-动态代理的内部实现" class="headerlink" title="Java 动态代理的内部实现"></a>Java 动态代理的内部实现</h2><p>现在我们就会有一个问题： Java 是怎么保证代理对象调用的任何方法都会调用 InvocationHandler 的 <code>invoke()</code> 方法的？</p>
+<p>这就涉及到动态代理的内部实现。假设有一个接口 Subject，且里面有 <code>int request(int i)</code> 方法，则生成的代理类大致如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">final</span> <span class="class"><span class="keyword">class</span> $<span class="title">Proxy1</span> <span class="keyword">extends</span> <span class="title">Proxy</span> <span class="keyword">implements</span> <span class="title">Subject</span></span>&#123;</div><div class="line">	<span class="keyword">private</span> InvocationHandler h;</div><div class="line">	<span class="keyword">private</span> $Proxy1()&#123;&#125;</div><div class="line">	<span class="keyword">public</span> $Proxy1(InvocationHandler h)&#123;</div><div class="line">		<span class="keyword">this</span>.h = h;</div><div class="line">	&#125;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">request</span><span class="params">(<span class="keyword">int</span> i)</span></span>&#123;</div><div class="line">		Method method = Subject.class.getMethod(<span class="string">"request"</span>, <span class="keyword">new</span> Class[]&#123;<span class="keyword">int</span>.class&#125;);	<span class="comment">//创建method对象</span></div><div class="line">		<span class="keyword">return</span> (Integer)h.invoke(<span class="keyword">this</span>, method, <span class="keyword">new</span> Object[]&#123;<span class="keyword">new</span> Integer(i)&#125;); <span class="comment">//调用了invoke方法</span></div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>通过上面的方法就成功调用了 invoke() 方法。</p>
+<h2 id="元编程"><a href="#元编程" class="headerlink" title="元编程"></a>元编程</h2><p>到最后，我还想介绍一下元编程，我是从 <a href="http://product.china-pub.com/3769393" target="_blank" rel="external">《MacTalk·人生元编程》</a> 中了解到元编程这个词的：</p>
+<blockquote>
+<p>元编程就是能够操作代码的代码</p>
+</blockquote>
+<p>Java 支持元编程因为反射、动态代理、内省等特性。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="http://www.ibm.com/developerworks/cn/java/j-lo-proxy1/" target="_blank" rel="external">Java 动态代理机制分析及扩展，第 1 部分</a></li>
+<li><a href="http://zhidao.baidu.com/link?url=lPrrnjezrVWQEAwnK3pLWAISllIeqmFBDe-H4PiSzxEczb8EZR0p6asCdsXxSfDLmRf50yoIo6q3QqpoZzoMMa" target="_blank" rel="external">动态代理的作用是什么？</a></li>
+<li><a href="http://rejoy.iteye.com/blog/1627405" target="_blank" rel="external">JDK动态代理实现原理</a></li>
+<li><a href="http://www.cnblogs.com/flyoung2008/archive/2013/08/11/3251148.html" target="_blank" rel="external">彻底理解JAVA动态代理</a></li>
+<li><a href="http://www.imooc.com/learn/214" target="_blank" rel="external">慕课网：模式的秘密—代理模式</a></li>
+</ul>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="hide pull-left" href="/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2015/03/09/策略模式/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>

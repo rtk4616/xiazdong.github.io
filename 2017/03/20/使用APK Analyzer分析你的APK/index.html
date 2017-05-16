@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>使用APK Analyzer分析你的APK | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="本文转载于Bugly。  本文是对 Analyze Your Build with APK Analyzer 的翻译。  Android Studio 2.2包含了APK Analyzer，通过它我们能够直观地看到APK的组成。使用APK Analyzer不仅能够减少你花在debug上的时间，而且还能减少你的APK大小。使用APK Analyzer，你能够实现：  查看APK中文件的绝对大小和相对">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用APK Analyzer分析你的APK">
+<meta property="og:url" content="http://xiazdong.github.io/2017/03/20/使用APK Analyzer分析你的APK/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="本文转载于Bugly。  本文是对 Analyze Your Build with APK Analyzer 的翻译。  Android Studio 2.2包含了APK Analyzer，通过它我们能够直观地看到APK的组成。使用APK Analyzer不仅能够减少你花在debug上的时间，而且还能减少你的APK大小。使用APK Analyzer，你能够实现：  查看APK中文件的绝对大小和相对">
+<meta property="og:image" content="https://developer.android.com/studio/images/build/apk-file-sizes_2x.png">
+<meta property="og:image" content="https://developer.android.com/studio/images/build/apk-manifest-error_2x.png">
+<meta property="og:image" content="https://developer.android.com/studio/images/build/apk-image-preview_2x.png">
+<meta property="og:image" content="https://developer.android.com/studio/images/build/apk-strings_2x.png">
+<meta property="og:image" content="https://developer.android.com/studio/images/build/apk-multidex_2x.png">
+<meta property="og:image" content="https://developer.android.com/studio/images/build/apk-compare_2x.png">
+<meta property="og:updated_time" content="2017-05-16T13:58:22.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="使用APK Analyzer分析你的APK">
+<meta name="twitter:description" content="本文转载于Bugly。  本文是对 Analyze Your Build with APK Analyzer 的翻译。  Android Studio 2.2包含了APK Analyzer，通过它我们能够直观地看到APK的组成。使用APK Analyzer不仅能够减少你花在debug上的时间，而且还能减少你的APK大小。使用APK Analyzer，你能够实现：  查看APK中文件的绝对大小和相对">
+<meta name="twitter:image" content="https://developer.android.com/studio/images/build/apk-file-sizes_2x.png">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#查看文件和大小信息"><span class="toc-text">查看文件和大小信息</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#查看AndroidManifest-xml"><span class="toc-text">查看AndroidManifest.xml</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#查看代码和资源实体"><span class="toc-text">查看代码和资源实体</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#查看DEX文件"><span class="toc-text">查看DEX文件</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#比较APK文件"><span class="toc-text">比较APK文件</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-使用APK Analyzer分析你的APK" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">使用APK Analyzer分析你的APK</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2017.03.20</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <p>本文转载于Bugly。</p>
+<blockquote>
+<p>本文是对 <a href="https://developer.android.com/studio/build/apk-analyzer.html" target="_blank" rel="external">Analyze Your Build with APK Analyzer</a> 的翻译。</p>
+</blockquote>
+<p>Android Studio 2.2包含了APK Analyzer，通过它我们能够直观地看到APK的组成。使用APK Analyzer不仅能够减少你花在debug上的时间，而且还能减少你的APK大小。使用APK Analyzer，你能够实现：</p>
+<ul>
+<li>查看APK中文件的绝对大小和相对大小。（译注：相对大小指的是该文件占整个APK大小的百分比）</li>
+<li>理解DEX文件的组成。（译注：能看到DEX文件中包含了哪些类）</li>
+<li>快速查看APK中文件的最终版本（比如AndroidManifest.xml）。（译注：AndroidManifest.xml、resources.arsc本来是二进制形式显示的，APK Analyzer能够解析并显示这些文件的内容）</li>
+<li>对比两个APK。（译注：新版APK和旧版APK之间文件大小的差异）</li>
+</ul>
+<p>这里有3种方法访问APK Analyzer：</p>
+<ul>
+<li>拖拽APK到Android Studio的编辑窗口。</li>
+<li>切换到Project视图，并且双击APK文件。</li>
+<li>在菜单栏中选择Build &gt; Analyzer APK，并且选择APK。</li>
+</ul>
+<p>视频：<a href="https://www.youtube.com/watch?v=ZiP3BGVpE9E" target="_blank" rel="external">https://www.youtube.com/watch?v=ZiP3BGVpE9E</a></p>
+<p>注意：当使用APK Analyzer分析debug的APK，请使用Build &gt; Build APK生成的APK。点击Run将会生成Instant Run的APK。APK Analyzer不能分析通过Instant Run生成的APK，判断APK是否是Intant Run生成的可以通过看APK中是否有instant-run.zip文件。</p>
+<blockquote>
+<p>译注：APK Analyzer是让我们更有效地制定减包方案的实用工具，它能够让我们发现使得APK变大的元凶。</p>
+</blockquote>
+<h2 id="查看文件和大小信息"><a href="#查看文件和大小信息" class="headerlink" title="查看文件和大小信息"></a>查看文件和大小信息</h2><p>APK就是一个zip包。APK Analyzer显示每个文件或目录作为一个实体，实体的层级说明了APK文件的结构。</p>
+<p>如图1，APK Analyzer对每个实体显示了raw file size和download file size。Raw File Size表示实体在磁盘中解压后的大小，而Download Size表示实体在Google Play中压缩后的大小。% of Total Download Size表示实体的download size占APK总的download size的百分比。</p>
+<blockquote>
+<p>译注：图1中，最上面的5.8M是指APK在磁盘中的大小，而4.9M是指从Google Play中下载的大小。</p>
+</blockquote>
+<p><img src="https://developer.android.com/studio/images/build/apk-file-sizes_2x.png" alt=""></p>
+<p>图1：在APK Analyzer中的文件大小</p>
+<blockquote>
+<p>译注：通过查看各个目录或文件的大小，我们能发现APK中哪个区域的文件太大了，比如如果dex太大，我们是不是引入了重复功能的第三方库（比如Glide和Fresco），或者抽取出一个精简的第三方库（精简ffmpeg库）；如果res目录太大，我们可以看看哪些图片过大了，需要通过tinypng压缩，或者用webp代替。</p>
+</blockquote>
+<h2 id="查看AndroidManifest-xml"><a href="#查看AndroidManifest-xml" class="headerlink" title="查看AndroidManifest.xml"></a>查看AndroidManifest.xml</h2><p>如果项目中包含了多个AndroidManifest.xml或者包含提供manifest文件的library，在APK中他们将被合并为一个manifest文件。在APK中manifest文件是普通的二进制文件，但是在APK Analyzer中查看manifest文件，该文件是以XML形式显示的。这种显示形式让我们能理解应用中的任何变化。比如，你能看到library中的AndroidManifest.xml是怎么合入最后的AndroidManifest.xml的。</p>
+<p>另外，这种显示形式提供了lint的能力，会在右上角显示警告、错误提示。图5显示了manifest文件的错误提示。</p>
+<p><img src="https://developer.android.com/studio/images/build/apk-manifest-error_2x.png" alt=""></p>
+<p>图5：manifest文件的一个错误。</p>
+<h2 id="查看代码和资源实体"><a href="#查看代码和资源实体" class="headerlink" title="查看代码和资源实体"></a>查看代码和资源实体</h2><p>不同的构建任务会改变APK文件最后的实体。比如混淆压缩规则能改变你最后的代码和图片资源。在APK Analyzer中能够快速查看文件的最终版本：点击实体，就能在下面看到文件的内容，包含文字和图片实体的预览。</p>
+<p><img src="https://developer.android.com/studio/images/build/apk-image-preview_2x.png" alt=""></p>
+<p>图2：最终图片资源的预览。</p>
+<p>APK Analyzer也能展示文本或二进制文件。比如点击resources.arsc能够让你看到针对配置特定的值（例如一个字符串资源的特定语言的翻译）。如图3，你能看到每个字符串资源的翻译。</p>
+<p><img src="https://developer.android.com/studio/images/build/apk-strings_2x.png" alt=""></p>
+<p>图3：翻译的字符串资源预览</p>
+<h2 id="查看DEX文件"><a href="#查看DEX文件" class="headerlink" title="查看DEX文件"></a>查看DEX文件</h2><p>APK Analyzer的DEX文件浏览器让你能够快速了解DEX文件的信息。我们能看到类、包、总的引用和声明个数，这些信息能够帮助我们决定是否使用multi-dex或者移除依赖使得满足64K方法数限制。</p>
+<p>图4展示了一个中等大小的APP（方法数接近64K）。每个包、类、方法都列有Defined Method和Referenced Method。Referenced Method列是DEX文件中引用的全部方法，它包含了你定义的方法、依赖的library、定义在标准Java和Android包中的方法。Defined Method列只包含了定义在DEX文件中方法，因此它是Referenced Method方法的子集。注意当你引入一个依赖，在依赖中定义的方法会包含在Defined Method和Referenced Method中。还要注意，混淆压缩也会改变DEX文件的内容。</p>
+<p><img src="https://developer.android.com/studio/images/build/apk-multidex_2x.png" alt=""></p>
+<p>图4：一个使用了multi-dex的应用。</p>
+<h2 id="比较APK文件"><a href="#比较APK文件" class="headerlink" title="比较APK文件"></a>比较APK文件</h2><p>APK Analyzer能比较两个不同APK中各个实体的大小。这对于我们了解为何你的APP相比上个版本变大了是很有用的。</p>
+<p>在发布一个新版APK之前，在APK Analyzer中导入你即将发布的APK。在右上角点击Compare With，选择上一个版本的APK，点击OK。然后就会出现类似图6的对话框，允许你比较之间的差别。</p>
+<p>图6显示了一个APP的debug和release包的差别，不同的编译类型会导致实体的不同。</p>
+<blockquote>
+<p>译注：Old Size是先选择的APK，New Size是后选择的APK。</p>
+</blockquote>
+<p><img src="https://developer.android.com/studio/images/build/apk-compare_2x.png" alt=""></p>
+<p>图6：debug和release的APK之间的差别。</p>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2017/02/01/RecyclerView必知必会/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2017/03/26/减少APK大小/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>

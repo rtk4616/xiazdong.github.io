@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>DNS基础 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="网络," />
+  
+
+  <meta name="description" content="前言Cracking the code interview 中有一道题：当你在浏览器中输入一个URL，并按下 Enter后都发生了什么？，在 Github 上有一个仓库：what-happens-when-zh_CN 也介绍了在浏览器中输入URL后发生的事情，其中都只是简单地介绍了 DNS 域名解析的过程，但其实域名解析远比这个复杂，因此本文将介绍关于 DNS 的基础知识。 本文演讲PPT请参见：">
+<meta name="keywords" content="网络">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DNS基础">
+<meta property="og:url" content="http://xiazdong.github.io/2015/06/23/DNS基础/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="前言Cracking the code interview 中有一道题：当你在浏览器中输入一个URL，并按下 Enter后都发生了什么？，在 Github 上有一个仓库：what-happens-when-zh_CN 也介绍了在浏览器中输入URL后发生的事情，其中都只是简单地介绍了 DNS 域名解析的过程，但其实域名解析远比这个复杂，因此本文将介绍关于 DNS 的基础知识。 本文演讲PPT请参见：">
+<meta property="og:image" content="http://i.imgur.com/6qVliAd.gif">
+<meta property="og:image" content="http://i.imgur.com/1eXmBYw.png">
+<meta property="og:image" content="http://i.imgur.com/WdAkAaV.png">
+<meta property="og:image" content="http://i.imgur.com/4lR3zJu.png">
+<meta property="og:updated_time" content="2017-05-16T13:58:22.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="DNS基础">
+<meta name="twitter:description" content="前言Cracking the code interview 中有一道题：当你在浏览器中输入一个URL，并按下 Enter后都发生了什么？，在 Github 上有一个仓库：what-happens-when-zh_CN 也介绍了在浏览器中输入URL后发生的事情，其中都只是简单地介绍了 DNS 域名解析的过程，但其实域名解析远比这个复杂，因此本文将介绍关于 DNS 的基础知识。 本文演讲PPT请参见：">
+<meta name="twitter:image" content="http://i.imgur.com/6qVliAd.gif">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#DNS-相关介绍"><span class="toc-text">DNS 相关介绍</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#DNS-基本概念"><span class="toc-text">DNS 基本概念</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#域名解析全过程"><span class="toc-text">域名解析全过程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#dig-命令"><span class="toc-text">dig 命令</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-DNS基础" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">DNS基础</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2015.06.23</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>Cracking the code interview 中有一道题：<a href="http://www.hawstein.com/posts/17.1.html" target="_blank" rel="external">当你在浏览器中输入一个URL，并按下 Enter后都发生了什么？</a>，在 Github 上有一个仓库：<a href="https://github.com/skyline75489/what-happens-when-zh_CN" target="_blank" rel="external">what-happens-when-zh_CN</a> 也介绍了在浏览器中输入URL后发生的事情，其中都只是简单地介绍了 DNS 域名解析的过程，但其实域名解析远比这个复杂，因此本文将介绍关于 DNS 的基础知识。</p>
+<p>本文演讲PPT请参见：<a href="http://xiazdong.me/slides/dns" target="_blank" rel="external">xiazdong.me/slides/dns</a></p>
+<h2 id="DNS-相关介绍"><a href="#DNS-相关介绍" class="headerlink" title="DNS 相关介绍"></a>DNS 相关介绍</h2><h3 id="DNS-基本概念"><a href="#DNS-基本概念" class="headerlink" title="DNS 基本概念"></a>DNS 基本概念</h3><p>DNS(Domain Name System, 域名系统) 是互联网的基础设施，主要负责域名解析，即负责将域名转换成 IP 地址。1983 年由 Paul Mockapetris 设计出来。</p>
+<p>域名是一个树状结构构成的，如下图，每个域名对应一个或多个 DNS 服务器，域名解析请求也是从上到下一步一步进行下发的。</p>
+<center><br><img src="http://i.imgur.com/6qVliAd.gif" width="300px"><br></center>
+
+<p>下面介绍两个基本概念：</p>
+<ul>
+<li><strong>Zone</strong>: 以上图来说，就是一棵子树。比如”.com”的 Zone 就是以 “.com” 为根的子树。因此 “www.taobao.com” 是在 “.com” 的 Zone 里的。</li>
+<li><strong>Domain</strong>: 树中的一条路径。比如 “taobao.com.” 是 Domain，”www.taobao.com.” 也是 Domain。</li>
+</ul>
+<p>从上图可知，域名(Domain)分成很多类：</p>
+<ul>
+<li><strong>根域名(Root Domain)</strong>: 是树状结构的根，在 URL 中对应的是：”.”。全世界一共有13个根域名服务器(每个服务器都是一个集群，通过 Anycast 技术共用一个 IP)，这13个根域名服务器的名字分别是 <code>[A-M].root-servers.net</code>，根域名服务器的分布图如下：</li>
+</ul>
+<center><br><img src="http://i.imgur.com/1eXmBYw.png" width="600px"><br></center>
+
+<ul>
+<li><strong>顶级域名(Top Level Domain, TLD)</strong>: 根域名的下一层，URL 中对应例如：”.com”,”.cn”,”.net”。TLD 分成两类：<ul>
+<li>gTLD(generic TLD, 国际顶级域名): 比如 <code>.com</code>, <code>.net</code>。</li>
+<li>ccTLD(Country Code TLD, 国家和地区顶级域名): 比如 <code>.cn</code>, <code>.jp</code>。</li>
+</ul>
+</li>
+<li><strong>二级域名(Second Level Domain)</strong>：这层就是一般我们用钱去 Godaddy 买的域名，比如”taobao.com”。</li>
+<li>三级、四级域名…</li>
+</ul>
+<p>URL 就是一个由”.”分隔的字符串，总长度必须小于等于255字节，每个分隔的子串必须小于等于63字节。其实完整的每个URL都是以”.”结尾的，比如”www.taobao.com.”，只是现在大家默认都会省去这个点。</p>
+<p>为了完成域名解析，不得不介绍一下 Local DNS。</p>
+<ul>
+<li>一般上网我们都是设置为 DHCP(Dynamic Host Configuration Protocol)的，Local DNS 是你连上网之后，由网络服务提供商(ISP, Internet Service Provider, 比如移动、连通、电信)自动就近分配(地理位置尽量近以加快域名解析的速度)给计算机的(一般会分配两个，一个主DNS，一个备用DNS)，因此 Local DNS 是由 ISP 自己维护的， ISP 还会为计算机分配 IP。如果你想自己设置 DNS 也是可以的(可以是公共 DNS，比如 <a href="http://www.alidns.com/" target="_blank" rel="external">AliDNS</a> 或 Google 的 <code>8.8.8.8</code>)，这样计算机就不使用 Local DNS 了。</li>
+<li>因为 Root DNS 的13个 IP 都是公开的，因此一般 Local DNS 会以静态文件的形式内置这13个 Root DNS 的 IP。</li>
+</ul>
+<p>Local DNS 是负责帮你完成域名解析的大功臣，你只需要把 DNS 域名解析的报文请求发送给 Local DNS，它会以递归的方式帮你完成一系列的请求解析(因为要不断请求不同层级的 DNS，先从根 DNS 开始，再到 TLD，…)，并最终返回给你域名的 IP。 Local DNS 执行流程如下图：</p>
+<center><br><img src="http://i.imgur.com/WdAkAaV.png" width="500px"><br></center><br>&gt; - 内网 IP: 这是局域网内部的IP地址，输入 <code>ipconfig</code> 看到的是内网IP，比如 “192.168.0.103”。<br>&gt; - 公网 IP: 这是运营商分配的IP地址，这个地址并不是你电脑独占的，比如我在家里电脑和手机连的是同一个网，那么他们共享同一个公网 IP。在百度里输入 IP，就能看到自己的外网 IP。<br><br>查看公网 IP 和 Local DNS 的 IP 的简便方法是访问：阿里的<a href="http://tool.alikunlun.com/doc.html" target="_blank" rel="external">昆仑镜</a>或者腾讯的<a href="http://utp.qq.com/" target="_blank" rel="external">华佗</a>。<br><br>&gt; 如果要自己搭一个 DNS 服务器，一般使用 BIND(Berkeley Internet Name Domain)。<br><br>### DNS 分类<br><br>- <strong>递归 DNS</strong>：负责接收域名解析请求，并帮助用户一次又一次递归地请求不同的 DNS 服务器，最后得到 IP 并返回给用户。比如 Local DNS, 公共 DNS。<br>- <strong>权威 DNS</strong>：保存某个域 DNS 解析的权威信息，怎么解析他说了算。 至于哪个 DNS 服务器是权威 DNS，则在上一级的 Zone File 中通过 NS 记录设置。比如为了让 DNSPod 的 “f1g1ns1.dnspod.net”和” f1g1ns2.dnspod.net” 作为 “xiazdong.me” 的权威 DNS，必须要到 Godaddy 中设置 Nameserver(即设置 NS 记录：<code>xiazdong.me NS f1g1ns1.dnspod.net</code>)，表明现在 “xiazdong.me” 有两个权威 DNS 服务器。<br><br>&gt; 一个 DNS 既可以作为递归 DNS，也可以同时作为权威 DNS，即当 DNS 请求该 DNS 负责的域名时，则进行解析；当 DNS 请求不是他负责的域名时，则作为递归 DNS 使用。<br><br>### DNS 攻击<br><br>- <strong>DNS 劫持(DNS Hijacking or DNS redirection)</strong>：攻击的人会 劫持 DNS 服务器，并获得管理权限，从而修改映射关系。常见的 DNS 劫持是 DNS 广告劫持，现象是比如你访问”www.taobao.com”，会在页面上弹出一个不相关广告，这是运营商干的，Local DNS 是 ISP 管理的，当你发一个 DNS 域名请求到 Local DNS，他会将 DNS 响应报文中的 IP 改成自己搭的广告服务器的IP，他预先会写一个静态页面在广告服务器，其中 <code>&lt;iframe&gt;</code> 依旧请求原页面，但是区别是多加一些代码用来弹广告。这个解决方法就是投诉。<br>- <strong>DNS 污染(DNS cache poisoning)</strong>：DNS 服务器的缓存映射被篡改。假设 Root DNS 被污染，那么如果用户请求 “www.taobao.com”，Root DNS 直接返回一个假 IP，让用户访问不了淘宝。如果 Root DNS 都被污染了，那就无解了。因此 DNS 劫持是对 DNS 服务器本身做修改，而 DNS 污染是对 DNS 服务器缓存做修改。<br>- <strong>DDOS(Distributed Deny Of Service, 分布式拒绝服务)</strong>： 搞一堆肉机，制造大量 DNS 解析请求，大量提升 QPS，导致 DNS 服务器的带宽被塞满，无法为其他用户提供服务。一些常见的解决方法是：黑名单(不对黑名单中 IP 提供 DNS 解析请求服务)、白名单(只对白名单中的 IP 提供 DNS 解析请求服务)。<br><br>### DNS Zone File<br><br>DNS Zone File(DNS 区域文件)是每个 DNS 服务器都需要有的一个文本文件，用来进行域名解析。一般格式如下：<br><br>    $ORIGIN example.com.     ; designates the start of this zone file in the namespace<br>    $TTL 1h                  ; default expiration time of all resource records without their own TTL value<br>    example.com.  IN  SOA   ns.example.com. username.example.com. ( 2007120710 1d 2h 4w 1h )<br>    example.com.  IN  NS    ns                    ; ns.example.com is a nameserver for example.com<br>    example.com.  IN  NS    ns.somewhere.example. ; ns.somewhere.example is a backup nameserver for example.com<br>    example.com.  IN  MX    10 mail.example.com.  ; mail.example.com is the mailserver for example.com<br>    @             IN  MX    20 mail2.example.com. ; equivalent to above line, “@” represents zone origin<br>    @             IN  MX    50 mail3              ; equivalent to above line, but using a relative host name<br>    example.com.  IN  A     192.0.2.1             ; IPv4 address for example.com<br>              IN  AAAA  2001:db8:10::1        ; IPv6 address for example.com<br>    ns            IN  A     192.0.2.2             ; IPv4 address for ns.example.com<br>              IN  AAAA  2001:db8:10::2        ; IPv6 address for ns.example.com<br>    www           IN  CNAME example.com.          ; www.example.com is an alias for example.com<br>    wwwtest       IN  CNAME www                   ; wwwtest.example.com is another alias for www.example.com<br>    mail          IN  A     192.0.2.3             ; IPv4 address for mail.example.com<br>    mail2         IN  A     192.0.2.4             ; IPv4 address for mail2.example.com<br>    mail3         IN  A     192.0.2.5             ; IPv4 address for mail3.example.com<br><br>解释如下：<br><br>- 文件中每行都是一个资源记录(Resource Record,RR)，资源记录有很多类型，比如 SOA(Start Of Authority), A(Address), NS(Name Server), MX(Mail eXchange), CNAME(别名，一般出于调度考虑)。<br>- <code>$ORIGIN example.com.</code>: 这个 Zone File 的 DNS 的域是 “example.com.”<br>- <code>$TTL 1h</code>: 该文件的记录的最大存活时间是1小时。<br>- <code>example.com.  IN  SOA   ns.example.com. username.example.com.</code>: “example.com.” 的首选 DNS 服务器是 “ns.example.com.”，管理员邮箱是”username@example.com.”。<br>- <code>example.com.  IN  NS ns</code>: “ns.example.com.” 是 “example.com” 的 Nameserver。<br>- <code>example.com.  IN  NS ns.somewhere.example.</code>: “ns.somewhere.example.” 是 “example.com” 的另一个 Nameserver。<br>- <code>example.com.  IN  MX 10 mail.example.com.</code>: “mail.example.com.” 是 “example.com.” 的邮件服务器，优先级是10(优先级数字越小，则优先级越高)。MX 表示 Mail eXchange。<br>- <code>@ IN  MX    20 mail2.example.com.</code>: 也是设置邮件服务器，优先级是20。<br>- <code>@ IN  MX    50 mail3</code>: “mail3.example.com.” 是 “example.com” 的邮件服务器，优先级是50。<br>- <code>example.com.  IN  A     192.0.2.1</code>: “example.com” 的 IPv4 地址是 “192.0.2.1”。<br>- <code>IN  AAAA  2001:db8:10::1</code>: “example.com” 的IPv6 地址是 “2001:db8:10::1”。<br>- <code>ns IN  A     192.0.2.2</code>: “ns.example.com.” 的 IPv4 地址是 “192.0.2.2”。<br>- <code>www IN  CNAME example.com.</code>: “www.example.com.” 是 “example.com” 的别名。<br>- <code>wwwtest IN CNAME www</code>: “wwwtest.example.com.” 是 “www.example.com.” 的别名。<br>- <code>mail IN  A 192.0.2.3</code>: “mail.example.com” 的 IPv4 地址是 “192.0.2.3”。<br>- <code>mail2 IN  A 192.0.2.4</code>: “mail2.example.com” 的 IPv4 地址是 “192.0.2.4”。<br>- <code>mail3 IN  A 192.0.2.5</code>: “mail3.example.com” 的 IPv4 地址是 “192.0.2.5”。<br><br>那么 CNAME 能不能被 A 替代呢？答案是不能，主要是看需求。因为：<br><br>- 定义不同: A 记录对应的是 IP，CNAME 对应的是 URL，他只是域名解析的中间结果，因此 CNAME 引入了中间态。<br>- 应用场景不同: 如果我想把某个域名指向 google.com，而 google.com 有很多 IP 地址，而且可能随时会更换，因此最好的方式是通过 CNAME 指向 google.com，而不是用 A 记录指向 google.com 对应的一个 IP 地址。<br><br>一般来说，一个域名的 DNS 服务器会有很多台，会以 Master-Slave 的形式部署，而每台 Master 或 Slave 都会有 Zone File，Slave 会通过 AXFR(全量传输), IXFR(增量传输) 或 Notify 的方式同步 Master 的 Zone File。如下图：<br><br><center><br><img src="http://i.imgur.com/4lR3zJu.png" width="600px"><br></center>
+
+<p>从上面这张图看出：Remote Admin 是 DNSPod 提供的操作界面，当你修改了记录后，他会同步到 Master 的 Zone File 中，并通知 Slave 更新。</p>
+<p>DNSPod 的权威 DNS 是”f1g1ns1.dnspod.net”和” f1g1ns2.dnspod.net”，我的博客”xiazdong.me”的权威 DNS 设置成了这两个 URL，为了让这个权威 DNS 生效，我需要去申请域名的平台(Godaddy)将 DNS NameServer 设置为这两个 URL，这样才能够生效，一般来说 Master DNS 服务器和 Slave DNS 服务器都是权威 DNS。如果你在 DNSPod 平台上修改 A 记录，那么会把修改同步到 Master DNS 服务器，Slave 再通过某种方式同步 Master 的 Zone File。</p>
+<h2 id="域名解析全过程"><a href="#域名解析全过程" class="headerlink" title="域名解析全过程"></a>域名解析全过程</h2><p>比如你在 Chrome 中输入 “www.taobao.com”，并按下回车，域名解析会进行如下步骤：</p>
+<ol>
+<li>查看浏览器 DNS 缓存。Chrome 可以通过 <code>chrome://net-internals/#dns</code> 查看浏览器的 DNS 缓存，一般这些缓存的 TTL(Time To Live) 是几分钟。</li>
+<li>查看系统 DNS 缓存。 Windows 可以通过 <code>ipconfig /displaydns</code> 查看系统 DNS 缓存。这里面包含了 hosts 文件设置的映射，有时候修改了 hosts 文件后，为了让 hosts 文件生效，需要执行 <code>ipconfig /flushdns</code>。</li>
+<li>查看路由器 DNS 缓存。</li>
+<li>查看 Local DNS 的 DNS 缓存。这部分缓存是由 ISP 自己实现，有些 ISP 为了减少域名解析次数，会将缓存的 TTL 特意变长一点，比如原来  TTL=10min，但是 ISP 自己实现的时候，设置缓存的时间是30min。这也会导致你更改了 DNS 服务器的 A 记录后不能马上生效的原因。</li>
+<li>如果这些缓存都没有域名对应的IP，那么 Local DNS 会帮你递归地开始进行域名解析。<ul>
+<li>因为在 Local DNS 中内置了 13个 Root DNS 的 IP，因此任意选择一个 Root DNS 的 IP 发起 DNS 解析请求报文，当 Root DNS 收到 Local DNS 的请求后，会发现这个 URL 的顶级域名是 “.com”，因此他会把 “.com” 的 DNS 服务器的 IP(通常会发13个 “.com” 的服务器的 IP)发送给 Local DNS 作为响应。</li>
+<li>Local DNS 收到 Root DNS 的响应后，会继续把请求发送给 “.com” 的 DNS 服务器(它的 IP 从 Root DNS 的响应中获得)，”.com” 的 DNS 服务器收到请求后，会发现这个 URL 的二级域名是 “taobao.com”，因此会把 “taobao.com” 的 DNS 服务器的 IP(通常也会有多个)发送给 Local DNS 作为响应。</li>
+<li>Local DNS 收到 “.com” DNS 的响应后，会继续把请求发送给 “.taobao.com” 的 DNS 服务器(它的 IP 从 “.com” DNS 的响应中获得)，”taobao.com” 的 DNS 服务器收到请求后，会发现这个 URL 的子域名是 “www.taobao.com”，那么会把 “www.taobao.com” 的 DNS 服务器的 IP 发送给 Local DNS 作为响应。当然这里可能会有一个问题，因为”www.taobao.com”会有多个IP对应，那么到底返回哪个IP呢？一般 DNS 会有调度原则，实现方法是：DNS 服务器会内置一个 IP 库，会根据请求源的 IP(Local DNS 的 IP) 确定他的国家、地区、运营商，因此会返回就近的 IP，这就实现了就近调度。一般 CDN(Content Delivery Network, 内容分发网络, 主要存储静态文件如 CSS, JS)的实现原理就是这样。</li>
+<li>Local DNS 收到了 “www.taobao.com” 的 IP，也就完成了任务，他会把这个 IP 送回给计算机。</li>
+</ul>
+</li>
+</ol>
+<blockquote>
+<ul>
+<li>域名请求和响应是以 UDP 协议发送的。</li>
+<li>RTT(Round Trip Time): 一次请求+响应的时间。</li>
+<li>TTL(Time To Live): 当 DNS 服务器返回 IP 时，会带有 TTL，表示这个映射你能缓存的时间，比如 TTL=10min，那么这个映射关系只能缓存10分钟，10分钟之后就过期了。但是 ISP 的 Local DNS 可能并不会那么听话，他可能会缓存半个小时。</li>
+</ul>
+</blockquote>
+<p>在无线端的域名解析，需要提几点：</p>
+<ul>
+<li>在开发移动应用时，为了节省域名解析的时间，采用”<strong>IP直连</strong>“的方式，即在应用中内置可能会用到的域名的 IP(比如手机淘宝可能会访问的域名其实都是可预料的)，这样就省去了域名解析的时间(一般解析时间在200ms-400ms)。</li>
+<li>由于 Local DNS 运维水平参差不齐，可能会出现 DNS 劫持、ISP 分配给用户的 Local DNS 不在一个地区，又因为一个应用可能会访问的域名是固定的，因此大公司都会自己实现一套异步的 DNS 解析，比如腾讯的 HttpDNS。</li>
+</ul>
+<p>HttpDNS 的实现思路是：</p>
+<ul>
+<li>开辟一个线程，从应用启动后定期地发起 HttpDNS 的域名解析请求(同时可以请求解析多个域名)到 HttpDNS 服务器(定期发起请求是因为怕 IP 过期)，该请求走 HTTP 协议，然后 HttpDNS 服务器把 HTTP 请求转换成 DNS 请求，并对后端的 DNS 服务器进行 DNS 域名解析请求，当解析完成后，会将请求域名的 IP 地址送回给客户端，并缓存起来。</li>
+<li>当应用发起网络请求，会首先看 HttpDNS 的缓存中是不是存在已经解析好的 IP 地址，如果有，则直接拿来用(这里可能会出现 IP 过期，也需要降级走 Local DNS)；如果没有，则降级走 Local DNS。</li>
+</ul>
+<h2 id="dig-命令"><a href="#dig-命令" class="headerlink" title="dig 命令"></a>dig 命令</h2><p>上一节已经介绍了 DNS 域名解析的基本流程，本节我们通过 Linux 中的 dig(Domain Information Groper) 命令来验证这个解析流程。以 <code>dig +trace www.taobao.com</code> 为例。</p>
+<p>输出如下：</p>
+<pre><code>; &lt;&lt;&gt;&gt; DiG 9.8.3-P1 &lt;&lt;&gt;&gt; +trace taobao.com
+;; global options: +cmd
+.            84725    IN    NS    l.root-servers.net.
+.            84725    IN    NS    j.root-servers.net.
+.            84725    IN    NS    c.root-servers.net.
+.            84725    IN    NS    f.root-servers.net.
+.            84725    IN    NS    i.root-servers.net.
+.            84725    IN    NS    k.root-servers.net.
+.            84725    IN    NS    h.root-servers.net.
+.            84725    IN    NS    e.root-servers.net.
+.            84725    IN    NS    m.root-servers.net.
+.            84725    IN    NS    a.root-servers.net.
+.            84725    IN    NS    g.root-servers.net.
+.            84725    IN    NS    b.root-servers.net.
+.            84725    IN    NS    d.root-servers.net.
+;; Received 505 bytes from 10.65.0.1#53(10.65.0.1) in 159 ms
+;上面这些数据是从 /etc/resolv.conf 中指定的 DNS 服务器获得的13个根域名服务器的 IP 地址和名称。
+
+com.            172800    IN    NS    a.gtld-servers.net.
+com.            172800    IN    NS    b.gtld-servers.net.
+com.            172800    IN    NS    c.gtld-servers.net.
+com.            172800    IN    NS    d.gtld-servers.net.
+com.            172800    IN    NS    e.gtld-servers.net.
+com.            172800    IN    NS    f.gtld-servers.net.
+com.            172800    IN    NS    g.gtld-servers.net.
+com.            172800    IN    NS    h.gtld-servers.net.
+com.            172800    IN    NS    i.gtld-servers.net.
+com.            172800    IN    NS    j.gtld-servers.net.
+com.            172800    IN    NS    k.gtld-servers.net.
+com.            172800    IN    NS    l.gtld-servers.net.
+com.            172800    IN    NS    m.gtld-servers.net.
+;; Received 488 bytes from 128.63.2.53#53(128.63.2.53) in 275 ms 
+;上面这些数据是从13个根域名服务器的其中一个(IP 地址 128.63.2.53)获得 &quot;.com&quot; 的 DNS 服务器的 IP 地址和名称。
+
+taobao.com.        172800    IN    NS    ns4.taobao.com.
+taobao.com.        172800    IN    NS    ns5.taobao.com.
+taobao.com.        172800    IN    NS    ns6.taobao.com.
+taobao.com.        172800    IN    NS    ns7.taobao.com.
+;; Received 180 bytes from 192.26.92.30#53(192.26.92.30) in 279 ms
+;上面这些数据是从13个&quot;.com&quot; DNS 服务器的其中一个(IP 地址 192.26.92.30)获得 &quot;taobao.com&quot; 的 DNS 服务器的 IP 地址和名称。
+
+taobao.com.        1800    IN    A    110.75.115.70
+taobao.com.        10800    IN    NS    ns7.taobao.com.
+taobao.com.        10800    IN    NS    ns5.taobao.com.
+taobao.com.        10800    IN    NS    ns4.taobao.com.
+taobao.com.        10800    IN    NS    ns6.taobao.com.
+;; Received 196 bytes from 110.75.38.29#53(110.75.38.29) in 3 ms
+;上面这些数据是从4个&quot;taobao.com&quot;的 DNS 服务器的其中一个(IP 地址为 110.75.38.29)获得 &quot;taobao.com&quot; 的 IP 地址：110.75.115.70。
+</code></pre><h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="http://segmentfault.com/a/1190000002662495" target="_blank" rel="external">程序员DNS知识指南</a></li>
+<li><a href="http://blog.chinaunix.net/uid-28216282-id-3757849.html" target="_blank" rel="external">DNS解析过程详解</a></li>
+<li><a href="http://www.cnblogs.com/cyq1162/archive/2012/11/26/2789424.html" target="_blank" rel="external">简说宽带商的弹窗广告进化及网站应对之策</a></li>
+</ul>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2015/03/11/观察者模式/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2016/01/28/Git基本使用指南/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>
