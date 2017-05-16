@@ -7,26 +7,26 @@
 <head>
   <meta charset="utf-8">
   
-  <title>JVM 内存模型 | xiazdong</title>
+  <title>JVM内存模型 | xiazdong</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
   
-    <meta name="keywords" content="Java," />
+    <meta name="keywords" content="Android," />
   
 
-  <meta name="description" content="blog">
-<meta name="keywords" content="blog">
+  <meta name="description" content="前言 本文内容大多来自《深入理解Java虚拟机》，但是经过整理，语言更加简练。  本篇为JVM入门系列的第一篇。本系列一共分为：  JVM 内存模型。 垃圾收集算法。 类加载机制。  JVM 介绍JVM(Java Virtual Machine)是Java程序员很熟悉的名字，但是他不只局限于Java语言，实际上JVM还支持其他语言运行在JVM上。 总的来说，JVM具有以下两个特性：  跨平台：Ja">
+<meta name="keywords" content="Android">
 <meta property="og:type" content="article">
-<meta property="og:title" content="JVM 内存模型">
-<meta property="og:url" content="http://xiazdong.github.io/2017/05/16/JVM内存模型/index.html">
+<meta property="og:title" content="JVM内存模型">
+<meta property="og:url" content="http://xiazdong.github.io/2015/08/12/JVM内存模型/index.html">
 <meta property="og:site_name" content="xiazdong">
-<meta property="og:description" content="blog">
+<meta property="og:description" content="前言 本文内容大多来自《深入理解Java虚拟机》，但是经过整理，语言更加简练。  本篇为JVM入门系列的第一篇。本系列一共分为：  JVM 内存模型。 垃圾收集算法。 类加载机制。  JVM 介绍JVM(Java Virtual Machine)是Java程序员很熟悉的名字，但是他不只局限于Java语言，实际上JVM还支持其他语言运行在JVM上。 总的来说，JVM具有以下两个特性：  跨平台：Ja">
 <meta property="og:image" content="http://i.imgur.com/1aKmO0o.jpg">
-<meta property="og:updated_time" content="2017-05-16T13:58:22.000Z">
+<meta property="og:updated_time" content="2017-05-16T14:42:19.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="JVM 内存模型">
-<meta name="twitter:description" content="blog">
+<meta name="twitter:title" content="JVM内存模型">
+<meta name="twitter:description" content="前言 本文内容大多来自《深入理解Java虚拟机》，但是经过整理，语言更加简练。  本篇为JVM入门系列的第一篇。本系列一共分为：  JVM 内存模型。 垃圾收集算法。 类加载机制。  JVM 介绍JVM(Java Virtual Machine)是Java程序员很熟悉的名字，但是他不只局限于Java语言，实际上JVM还支持其他语言运行在JVM上。 总的来说，JVM具有以下两个特性：  跨平台：Ja">
 <meta name="twitter:image" content="http://i.imgur.com/1aKmO0o.jpg">
 
   
@@ -147,12 +147,12 @@
 <div class="content content-post CENTER">
    <article id="post-JVM内存模型" class="article article-type-post" itemprop="blogPost">
   <header class="article-header">
-    <h1 class="post-title">JVM 内存模型</h1>
+    <h1 class="post-title">JVM内存模型</h1>
 
     <div class="article-meta">
       <span>
         <i class="icon-calendar"></i>
-        <span>2017.05.16</span>
+        <span>2015.08.12</span>
       </span>
 
       
@@ -163,11 +163,6 @@
       
 
       
-  <span class="article-category">
-    <i class="icon-list"></i>
-    <a class="article-category-link" href="/categories/Java/">Java</a>
-  </span>
-
 
 
       
@@ -274,10 +269,10 @@
 
    
   <div class="box-prev-next clearfix">
-    <a class="show pull-left" href="/2017/05/16/Android图像处理－像素化的原理及实现/">
+    <a class="show pull-left" href="/2015/06/23/DNS基础/">
         <i class="icon icon-angle-left"></i>
     </a>
-    <a class="hide pull-right" href="/">
+    <a class="show pull-right" href="/2016/01/28/Git基本使用指南/">
         <i class="icon icon-angle-right"></i>
     </a>
   </div>
