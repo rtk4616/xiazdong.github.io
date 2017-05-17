@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>Android 抓包实践总结 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="前言Android 网络通信是 Android 开发的一个很重要的部分，而抓包能够查看网络通信的具体细节，因此在平时开发过程中经常用到。 本文将讲解几种抓包形式：  Charles 实现实时 HTTP/HTTPS 抓包。 Wireshark+Tcpdump 实现非实时 TCP+HTTP 抓包。 Wireshark+Tcpdump+nc 实现实时 TCP+HTTP 抓包。 Stetho 实现侵入式">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android 抓包实践总结">
+<meta property="og:url" content="http://xiazdong.github.io/2015/07/14/Android 抓包实践总结/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="前言Android 网络通信是 Android 开发的一个很重要的部分，而抓包能够查看网络通信的具体细节，因此在平时开发过程中经常用到。 本文将讲解几种抓包形式：  Charles 实现实时 HTTP/HTTPS 抓包。 Wireshark+Tcpdump 实现非实时 TCP+HTTP 抓包。 Wireshark+Tcpdump+nc 实现实时 TCP+HTTP 抓包。 Stetho 实现侵入式">
+<meta property="og:image" content="http://i.imgur.com/ChnqdoO.png">
+<meta property="og:image" content="http://i.imgur.com/9lvVnbP.png">
+<meta property="og:image" content="http://i.imgur.com/ffV4vq4.png">
+<meta property="og:updated_time" content="2017-05-17T01:00:20.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android 抓包实践总结">
+<meta name="twitter:description" content="前言Android 网络通信是 Android 开发的一个很重要的部分，而抓包能够查看网络通信的具体细节，因此在平时开发过程中经常用到。 本文将讲解几种抓包形式：  Charles 实现实时 HTTP/HTTPS 抓包。 Wireshark+Tcpdump 实现非实时 TCP+HTTP 抓包。 Wireshark+Tcpdump+nc 实现实时 TCP+HTTP 抓包。 Stetho 实现侵入式">
+<meta name="twitter:image" content="http://i.imgur.com/ChnqdoO.png">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Charles-实时-HTTP-抓包"><span class="toc-text">Charles 实时 HTTP 抓包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Wireshark-Tcpdump-非实时-TCP-HTTP-抓包"><span class="toc-text">Wireshark+Tcpdump 非实时 TCP+HTTP 抓包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Wireshark-实时-TCP-HTTP-抓包"><span class="toc-text">Wireshark 实时 TCP+HTTP 抓包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Stetho-实现侵入式抓包"><span class="toc-text">Stetho 实现侵入式抓包</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-Android 抓包实践总结" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">Android 抓包实践总结</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2015.07.14</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>Android 网络通信是 Android 开发的一个很重要的部分，而抓包能够查看网络通信的具体细节，因此在平时开发过程中经常用到。</p>
+<p>本文将讲解几种抓包形式：</p>
+<ol>
+<li>Charles 实现实时 HTTP/HTTPS 抓包。</li>
+<li>Wireshark+Tcpdump 实现非实时 TCP+HTTP 抓包。</li>
+<li>Wireshark+Tcpdump+nc 实现实时 TCP+HTTP 抓包。</li>
+<li>Stetho 实现侵入式 HTTP 抓包。</li>
+</ol>
+<p>如果只需要查看 HTTP 包，那么只需要使用 Charles，但是如果想要看 TCP 包，那么需要用到 Wireshark。</p>
+<blockquote>
+<p>本文的环境是 MAC OS，Android 手机必须 Root。</p>
+</blockquote>
+<ul>
+<li>Charles 安装：<a href="http://blog.csdn.net/jiangwei0910410003/article/details/41620363" target="_blank" rel="external">http://blog.csdn.net/jiangwei0910410003/article/details/41620363</a></li>
+<li>Wireshark 安装：<a href="http://blog.csdn.net/phunxm/article/details/38590561" target="_blank" rel="external">http://blog.csdn.net/phunxm/article/details/38590561</a></li>
+</ul>
+<h2 id="Charles-实时-HTTP-抓包"><a href="#Charles-实时-HTTP-抓包" class="headerlink" title="Charles 实时 HTTP 抓包"></a>Charles 实时 HTTP 抓包</h2><ul>
+<li>进入 WIFI 设置，设置 WIFI 网络的代理，如下图：</li>
+</ul>
+<p><img src="http://i.imgur.com/ChnqdoO.png" width="300px"></p>
+<ul>
+<li>设置完之后，你在手机的浏览器访问”tu.qq.com”，就能在 Charles 中实时查看，如下图：</li>
+</ul>
+<p><img src="http://i.imgur.com/9lvVnbP.png" width="1000px"></p>
+<p>当然，Charles 也可以抓取 HTTPS 包，但是因为 HTTPS 的报文是加密的，因此为了能够看到明文的报文，过程如下：</p>
+<ul>
+<li>从 <a href="http://www.charlesproxy.com/documentation/additional/legacy-ssl-proxying/" target="_blank" rel="external">这里</a> 下载名为”charles.crt”证书，并通过”adb push charles.crt /mnt/sdcard”放入手机，然后”设置”-&gt;”安全”-&gt;”从存储设备安装”为手机安装证书。</li>
+</ul>
+<p>这样就可以了。你可以在浏览器中输入”www.baidu.com”，发现可以看到请求和响应都是明文了。</p>
+<h2 id="Wireshark-Tcpdump-非实时-TCP-HTTP-抓包"><a href="#Wireshark-Tcpdump-非实时-TCP-HTTP-抓包" class="headerlink" title="Wireshark+Tcpdump 非实时 TCP+HTTP 抓包"></a>Wireshark+Tcpdump 非实时 TCP+HTTP 抓包</h2><p>Charles 只能抓取并查看 HTTP(S) 的包，但是如果想抓取并查看 TCP 的包，就不能不用 Tcpdump(抓取 TCP 包) 和 Wireshark(查看 TCP 包)。</p>
+<p>很多人会说，你抓 TCP 包干啥，又没什么用。因为 HTTP 协议是建立在 TCP 协议之上的，因此通过查看 TCP 包的情况可以看出：HTTP 通信的 TCP 连接是否被复用。</p>
+<ul>
+<li>从 <a href="https://github.com/xiazdong/xiazdong.github.io/blob/master/_posts/tcpdump" target="_blank" rel="external">这里</a> 下载 Tcpdump。</li>
+<li>将 tcpdump 放入手机：<code>adb push ./tcpdump /data/local/tcpdump</code>。</li>
+<li>将 tcpdump 的权限变为可执行：<code>chmod +x tcpdump</code>。</li>
+<li>开始抓包：<code>/data/local/tcpdump -vv -s 0 -w /mnt/sdcard/pcapture.pcap</code>。其中 “-s 0” 表示每个包都抓取全部长度，而不是部分长度；”-w /mnt/sdcard/pcapture.pcap” 表示抓取的包写入指定文件；”-vv” 表示显示多一些信息，如果要显示更多信息可以用 “-vvv”。</li>
+<li>按下 “contrl+c” 结束抓包。</li>
+<li>将”/mnt/sdcard/pcapture.pcap” 移到电脑上：<code>adb pull /mnt/sdcard/pcapture.pcap &lt;指定目录&gt;</code>。</li>
+<li>通过 Wireshark 进行分析。我们可以通过 Wireshark 的 “Follow TCP Stream” 查看一条 TCP 连接是否被复用。</li>
+</ul>
+<p>TCPDUMP 默认采用混杂模式，即能够抓取其他进程的包。</p>
+<blockquote>
+<ul>
+<li>Tcpdump 命令：<a href="http://www.berlinix.com/net/tcpdump.php" target="_blank" rel="external">http://www.berlinix.com/net/tcpdump.php</a></li>
+<li>Wireshark命令：<a href="http://www.qtasp.cn/wiresharkcharpt/Customizing%20wireshark.html" target="_blank" rel="external">http://www.qtasp.cn/wiresharkcharpt/Customizing%20wireshark.html</a></li>
+</ul>
+</blockquote>
+<h2 id="Wireshark-实时-TCP-HTTP-抓包"><a href="#Wireshark-实时-TCP-HTTP-抓包" class="headerlink" title="Wireshark 实时 TCP+HTTP 抓包"></a>Wireshark 实时 TCP+HTTP 抓包</h2><p>非实时抓包一般已经足够了，但是不是特别方便，也不够装逼，因为每次抓包都需要做很多步骤，先手机抓，抓完了再导入电脑看。因此这里给出一个实时抓取并查看 TCP+HTTP 包的方法。</p>
+<p>基本思路如下：</p>
+<p><img src="http://i.imgur.com/ffV4vq4.png" width="500px"></p>
+<ul>
+<li>为手机安装 Busybox：<a href="http://xiazdong.me/2015/06/30/introduction-to-busybox/" target="_blank" rel="external">http://xiazdong.me/2015/06/30/introduction-to-busybox/</a></li>
+<li>在 adb shell 中运行 <code>mount -o remount,rw /</code>：将目录从只读变为可读写。</li>
+<li>在 adb shell 中运行 <code>/data/local/tcpdump -n -vv -s 0 -w – | nc -l -p 11233</code>：手机开始抓包。</li>
+<li>另开一个终端运行 <code>adb forward tcp:11233 tcp:11233 &amp;&amp; nc 127.0.0.1 11233 | sudo wireshark -k -S -i –</code> 实现将手机抓的包传送到电脑的 Wireshark 中。</li>
+</ul>
+<blockquote>
+<p>你会发现 Wireshark 里面有很多 SSDP 的报文，因为 SSDP 是基于 UDP 协议的，因此只需要输入 TCP 就能过滤掉他。</p>
+<ul>
+<li>Wireshark 常用过滤命令点<a href="http://jingyan.baidu.com/article/7f41ececede744593c095c79.html" target="_blank" rel="external">这里</a>。</li>
+<li>Netcat 命令：<a href="https://www.91ri.org/7761.htmlhttps://www.91ri.org/7761.html" target="_blank" rel="external">https://www.91ri.org/7761.htmlhttps://www.91ri.org/7761.html</a></li>
+</ul>
+</blockquote>
+<h2 id="Stetho-实现侵入式抓包"><a href="#Stetho-实现侵入式抓包" class="headerlink" title="Stetho 实现侵入式抓包"></a>Stetho 实现侵入式抓包</h2><p>前面介绍的几种方法的优点是非侵入式，即不需要修改原应用的代码。方法见：<a href="http://stormzhang.com/android/2015/03/05/android-debug-use-chrome/" target="_blank" rel="external">使用Chrome来调试你的Android App</a>。在开发的时候，Stetho是很好的选择，因为不仅能抓包，还能看到数据库内容。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="http://blog.csdn.net/phunxm/article/details/38590561" target="_blank" rel="external">MAC 安装 Wireshark</a></li>
+<li><a href="http://www.cnblogs.com/xiaowenji/archive/2011/03/12/1982309.html" target="_blank" rel="external">为 Android 安装 Busybox</a></li>
+<li><a href="http://blog.csdn.net/gebitan505/article/details/19044857" target="_blank" rel="external">Tcpdump + Wireshark 非实时抓包</a></li>
+<li><a href="http://tech.uc.cn/?p=2278" target="_blank" rel="external">Wireshark 实时抓包(TCP,HTTP)</a></li>
+<li><a href="http://blog.csdn.net/jiangwei0910410003/article/details/41620363" target="_blank" rel="external">Charles 实现 HTTP 抓包</a></li>
+</ul>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2015/06/23/DNS基础/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2015/08/12/JVM内存模型/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>

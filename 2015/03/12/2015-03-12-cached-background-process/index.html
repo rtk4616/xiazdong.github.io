@@ -7,27 +7,28 @@
 <head>
   <meta charset="utf-8">
   
-  <title>观察者模式 | xiazdong</title>
+  <title>什么是缓存的后台进程？ | xiazdong</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
   
-    <meta name="keywords" content="设计模式," />
+    <meta name="keywords" content="Android," />
   
 
-  <meta name="description" content="介绍 定义：观察者模式定义了一种一对多的依赖关系，让多个观察者对象同时监听某一个主题对象。这个主题对象在状态发生变化时，会通知所有观察者对象，使它们能够自动更新自己。 UML 图：如下。   从上图看出：  在主题对象(Subject)中存在一个观察者集合 observerCollection。 通过 registerObserver(observer) 将 observer 注册到 Subjec">
-<meta name="keywords" content="设计模式">
+  <meta name="description" content="前言 在应用管理这个界面里面发现有已缓存这一项，里面写了”缓存的后台进程”，英文为 Cached Background Process。 这个词由 Cached 和 Background Process 组成，因此本文就这两个方面进行解释。 参考：StackOverflow Background ProcessAndroid 对进程划分了5个等级：  Foreground Process: 用户看">
+<meta name="keywords" content="Android">
 <meta property="og:type" content="article">
-<meta property="og:title" content="观察者模式">
-<meta property="og:url" content="http://xiazdong.github.io/2015/03/11/观察者模式/index.html">
+<meta property="og:title" content="什么是缓存的后台进程？">
+<meta property="og:url" content="http://xiazdong.github.io/2015/03/12/2015-03-12-cached-background-process/index.html">
 <meta property="og:site_name" content="xiazdong">
-<meta property="og:description" content="介绍 定义：观察者模式定义了一种一对多的依赖关系，让多个观察者对象同时监听某一个主题对象。这个主题对象在状态发生变化时，会通知所有观察者对象，使它们能够自动更新自己。 UML 图：如下。   从上图看出：  在主题对象(Subject)中存在一个观察者集合 observerCollection。 通过 registerObserver(observer) 将 observer 注册到 Subjec">
-<meta property="og:image" content="http://i.imgur.com/gpmJ9sB.png">
-<meta property="og:updated_time" content="2017-05-16T13:58:22.000Z">
+<meta property="og:description" content="前言 在应用管理这个界面里面发现有已缓存这一项，里面写了”缓存的后台进程”，英文为 Cached Background Process。 这个词由 Cached 和 Background Process 组成，因此本文就这两个方面进行解释。 参考：StackOverflow Background ProcessAndroid 对进程划分了5个等级：  Foreground Process: 用户看">
+<meta property="og:image" content="http://i.imgur.com/rKmt3cQ.png">
+<meta property="og:image" content="http://i.imgur.com/hih5BAq.png">
+<meta property="og:updated_time" content="2017-05-17T01:06:35.000Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="观察者模式">
-<meta name="twitter:description" content="介绍 定义：观察者模式定义了一种一对多的依赖关系，让多个观察者对象同时监听某一个主题对象。这个主题对象在状态发生变化时，会通知所有观察者对象，使它们能够自动更新自己。 UML 图：如下。   从上图看出：  在主题对象(Subject)中存在一个观察者集合 observerCollection。 通过 registerObserver(observer) 将 observer 注册到 Subjec">
-<meta name="twitter:image" content="http://i.imgur.com/gpmJ9sB.png">
+<meta name="twitter:title" content="什么是缓存的后台进程？">
+<meta name="twitter:description" content="前言 在应用管理这个界面里面发现有已缓存这一项，里面写了”缓存的后台进程”，英文为 Cached Background Process。 这个词由 Cached 和 Background Process 组成，因此本文就这两个方面进行解释。 参考：StackOverflow Background ProcessAndroid 对进程划分了5个等级：  Foreground Process: 用户看">
+<meta name="twitter:image" content="http://i.imgur.com/rKmt3cQ.png">
 
   
 
@@ -139,20 +140,20 @@
 
   <div id="toc" class="toc-article">
     <strong class="toc-title">文章目录</strong>
-    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#介绍"><span class="toc-text">介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Android-中的应用：ListView"><span class="toc-text">Android 中的应用：ListView</span></a></li></ol>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Background-Process"><span class="toc-text">Background Process</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Cached"><span class="toc-text">Cached</span></a></li></ol>
   </div>
 
 
 
 <div class="content content-post CENTER">
-   <article id="post-观察者模式" class="article article-type-post" itemprop="blogPost">
+   <article id="post-2015-03-12-cached-background-process" class="article article-type-post" itemprop="blogPost">
   <header class="article-header">
-    <h1 class="post-title">观察者模式</h1>
+    <h1 class="post-title">什么是缓存的后台进程？</h1>
 
     <div class="article-meta">
       <span>
         <i class="icon-calendar"></i>
-        <span>2015.03.11</span>
+        <span>2015.03.12</span>
       </span>
 
       
@@ -182,22 +183,25 @@
 
   <div class="article-content">
     
-      <h2 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h2><ul>
-<li>定义：观察者模式定义了一种一对多的依赖关系，让多个观察者对象同时监听某一个主题对象。这个主题对象在状态发生变化时，会通知所有观察者对象，使它们能够自动更新自己。</li>
-<li>UML 图：如下。</li>
-</ul>
-<p><img src="http://i.imgur.com/gpmJ9sB.png" alt=""></p>
-<p>从上图看出：</p>
-<ul>
-<li>在主题对象(Subject)中存在一个观察者集合 observerCollection。</li>
-<li>通过 <code>registerObserver(observer)</code> 将 observer 注册到 Subject；通过 <code>unregisterObserver(observer)</code> 取消注册。</li>
-<li>主题对象有一个 <code>notifyObservers()</code> 方法，当 Subject 对象状态发生变化时，就会主动调用该方法，通知注册在该对象的所有观察者调用 <code>notify()</code>。</li>
-</ul>
-<p>因此可以看出：一个观察者可以注册到多个主体对象中，一个主体对象也可以有多个观察者。</p>
-<p>实际应用：你在门上装了一个防盗装置，当门关的时候就开始监听门的状态(注册了一个观察者)，当门打开时就发出警报(调用了 <code>notify()</code>)。</p>
-<h2 id="Android-中的应用：ListView"><a href="#Android-中的应用：ListView" class="headerlink" title="Android 中的应用：ListView"></a>Android 中的应用：ListView</h2><p>在 ListView 中我们会调用 <code>setAdapter(adapter)</code> 设置 ListView 的具体内容，但是实际上这个方法中还新建了一个观察者，并注册在 adapter 上：</p>
-<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">mDataSetObserver = <span class="keyword">new</span> AdapterDataSetObserver();</div><div class="line">mAdapter.registerDataSetObserver(mDataSetObserver);</div></pre></td></tr></table></figure>
-<p>因此一个 ListView 中就有一个 AdapterDataSetObserver。当 adapter 内容发生改变时，开发者会调用 <code>adapter.notifyDataSetChanged()</code> ，这个方法的内部实现就是通知注册在 adapter 上的所有观察者调自己的 <code>onChanged()</code> 方法。</p>
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p><img src="http://i.imgur.com/rKmt3cQ.png" width="200px"></p>
+<p>在应用管理这个界面里面发现有<strong>已缓存</strong>这一项，里面写了”缓存的后台进程”，英文为 Cached Background Process。</p>
+<p>这个词由 <code>Cached</code> 和 <code>Background Process</code> 组成，因此本文就这两个方面进行解释。</p>
+<p>参考：<a href="http://stackoverflow.com/questions/14259504/on-android-whats-the-difference-between-running-processes-and-cached-backgroun" target="_blank" rel="external">StackOverflow</a></p>
+<h2 id="Background-Process"><a href="#Background-Process" class="headerlink" title="Background Process"></a>Background Process</h2><p>Android 对进程划分了5个等级：</p>
+<ol>
+<li>Foreground Process: 用户看得见，且能与用户交互的进程。</li>
+<li>Visible Process: 用户看得见的进程，可以是没有完全隐藏的。</li>
+<li>Service Process: Started 的服务。</li>
+<li>Background Process: 不可见的进程。</li>
+<li>Empty Process: 不包含任何组件的进程。</li>
+</ol>
+<p>等级越高越容易被回收。很显然后台进程属于等级4，是非常容易被系统回收的。</p>
+<h2 id="Cached"><a href="#Cached" class="headerlink" title="Cached"></a>Cached</h2><blockquote>
+<p>为了更充分地利用 CPU，操作系统会在内存中放置多个进程，这种技术叫 Multiprogramming。</p>
+</blockquote>
+<p>Cached Background Process 的特征是：这个后台进程没有前台界面显示，并且没有服务在运行。<br>Cached Background Process 目前在内存中因为内存很充裕，这样做是为了：当用户再次打开该应用时，能更快地打开。如果系统发现内存不够用了，就很容易将踢出内存。</p>
+<p>总的来说，Cached Background Process 和 Running Process 的区别在于：虽然他们都在内存中，但是 Running Process 是需要消耗 CPU 的(至少一个服务还在运行)，而 Cached Background Process 是不需要消耗 CPU 的。我们可以从下图中看出 Running Process 都是带着服务的：</p>
+<p><img src="http://i.imgur.com/hih5BAq.png" width="200px"></p>
 
     
   </div>
@@ -228,10 +232,10 @@
 
    
   <div class="box-prev-next clearfix">
-    <a class="show pull-left" href="/2015/03/09/策略模式/">
+    <a class="show pull-left" href="/2015/03/11/观察者模式/">
         <i class="icon icon-angle-left"></i>
     </a>
-    <a class="show pull-right" href="/2015/03/12/2015-03-12-cached-background-process/">
+    <a class="show pull-right" href="/2015/06/23/DNS基础/">
         <i class="icon icon-angle-right"></i>
     </a>
   </div>

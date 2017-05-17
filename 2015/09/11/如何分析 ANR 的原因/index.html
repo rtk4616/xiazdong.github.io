@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>如何分析 ANR 的原因 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="前言这个问题是面试的时候被问到的，问题原话：”怎么查看 ANR Log?”。  我们写程序其实并不仅仅是避免 ANR，而是要让应用体验”如丝般顺滑”。  引发 ANR 的原因当用户的输入事件(Input Event，如按键或触摸)在5秒内得不到响应 或者 BroadcastReceiver 在 10秒内未做完，就会引发 ANR。一般来说，引起 ANR 的原因：  主线程有耗时的计算操作。 主线程在">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何分析 ANR 的原因">
+<meta property="og:url" content="http://xiazdong.github.io/2015/09/11/如何分析 ANR 的原因/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="前言这个问题是面试的时候被问到的，问题原话：”怎么查看 ANR Log?”。  我们写程序其实并不仅仅是避免 ANR，而是要让应用体验”如丝般顺滑”。  引发 ANR 的原因当用户的输入事件(Input Event，如按键或触摸)在5秒内得不到响应 或者 BroadcastReceiver 在 10秒内未做完，就会引发 ANR。一般来说，引起 ANR 的原因：  主线程有耗时的计算操作。 主线程在">
+<meta property="og:image" content="http://i.imgur.com/3lAAAYg.png">
+<meta property="og:updated_time" content="2017-05-17T00:55:46.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="如何分析 ANR 的原因">
+<meta name="twitter:description" content="前言这个问题是面试的时候被问到的，问题原话：”怎么查看 ANR Log?”。  我们写程序其实并不仅仅是避免 ANR，而是要让应用体验”如丝般顺滑”。  引发 ANR 的原因当用户的输入事件(Input Event，如按键或触摸)在5秒内得不到响应 或者 BroadcastReceiver 在 10秒内未做完，就会引发 ANR。一般来说，引起 ANR 的原因：  主线程有耗时的计算操作。 主线程在">
+<meta name="twitter:image" content="http://i.imgur.com/3lAAAYg.png">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#引发-ANR-的原因"><span class="toc-text">引发 ANR 的原因</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#分析-ANR-的原因"><span class="toc-text">分析 ANR 的原因</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Logcat-ANR-Log"><span class="toc-text">Logcat ANR Log</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#traces-txt"><span class="toc-text">traces.txt</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-如何分析 ANR 的原因" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">如何分析 ANR 的原因</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2015.09.11</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>这个问题是面试的时候被问到的，问题原话：”怎么查看 ANR Log?”。</p>
+<blockquote>
+<p>我们写程序其实并不仅仅是避免 ANR，而是要让应用体验”如丝般顺滑”。</p>
+</blockquote>
+<h2 id="引发-ANR-的原因"><a href="#引发-ANR-的原因" class="headerlink" title="引发 ANR 的原因"></a>引发 ANR 的原因</h2><p>当用户的输入事件(Input Event，如按键或触摸)在5秒内得不到响应 或者 BroadcastReceiver 在 10秒内未做完，就会引发 ANR。一般来说，引起 ANR 的原因：</p>
+<ul>
+<li>主线程有耗时的计算操作。</li>
+<li>主线程在等待获取某个资源(可能是死锁)。</li>
+<li>主线程睡眠太久。</li>
+</ul>
+<p>简单地说就是主线程卡住了，导致用户的输入事件处理不了。</p>
+<h2 id="分析-ANR-的原因"><a href="#分析-ANR-的原因" class="headerlink" title="分析 ANR 的原因"></a>分析 ANR 的原因</h2><p>当发生 ANR 时，我们可以从两部分查看原因：</p>
+<ul>
+<li>初步：Logcat 的 ANR 日志查看 CPU 使用率。如果 CPU 使用率很高，表明有耗时计算。</li>
+<li>深入：查看 “/data/anr/traces.txt” 文件。</li>
+</ul>
+<h3 id="Logcat-ANR-Log"><a href="#Logcat-ANR-Log" class="headerlink" title="Logcat ANR Log"></a>Logcat ANR Log</h3><p>这块日志主要分为三部分。</p>
+<p>第一部分：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">512-670/system_process E/ActivityManager﹕ ANR in me.xiazdong.anrdemo (me.xiazdong.anrdemo/.MainActivity)</div><div class="line">Reason: keyDispatchingTimedOut</div></pre></td></tr></table></figure>
+<p>从上面看出导致 ANR 的原因是 “keyDispatchingTimeOut”。</p>
+<p>第二部分：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">CPU usage from 18523ms to 0ms ago with 99% awake:</div><div class="line">16% 753/com.android.systemui: 13% user + 3.2% kernel / faults: 124 minor</div><div class="line">13% 175/surfaceflinger: 4.2% user + 9% kernel / faults: 3572 minor</div><div class="line">6.4% 512/system_server: 4.7% user + 1.7% kernel / faults: 850 minor</div><div class="line">3% 256/adbd: 0.2% user + 2.8% kernel / faults: 1033 minor</div><div class="line">1.1% 252/mpdecision: 0.1% user + 1% kernel</div><div class="line">0.9% 6652/kworker/0:2: 0% user + 0.9% kernel</div><div class="line">0.8% 1896/cn.ledongli.ldl: 0.6% user + 0.1% kernel / faults: 7 minor</div><div class="line">0.8% 27946/kworker/0:3: 0% user + 0.8% kernel</div><div class="line">0.7% 4711/kworker/u:3: 0% user + 0.7% kernel</div><div class="line">0.5% 3059/com.jianshu.haruki:pushservice: 0.4% user + 0.1% kernel / faults: 24 minor</div><div class="line">0.5% 3607/com.jianshu.haruki: 0.3% user + 0.1% kernel / faults: 2 minor</div><div class="line">0.4% 172/netd: 0.2% user + 0.2% kernel</div><div class="line">0.4% 168/vold: 0.3% user + 0% kernel</div><div class="line">0.3% 127/ueventd: 0.2% user + 0.1% kernel</div><div class="line">0.3% 305/sensors.qcom: 0.1% user + 0.2% kernel</div><div class="line">0.1% 4157/com.ttyongche:ixintui_service_v1: 0.1% user + 0% kernel / faults: 13 minor</div><div class="line">0.1% 8844/com.eg.android.AlipayGphone:push: 0.1% user + 0% kernel / faults: 18 minor</div><div class="line">0% 114/irq/294-atmel_m: 0% user + 0% kernel</div><div class="line">0.1% 167/servicemanager: 0% user + 0% kernel</div><div class="line">0.1% 726/MC_Thread: 0% user + 0.1% kernel</div><div class="line">0.1% 1024/com.android.deskclock: 0.1% user + 0% kernel / faults: 7 minor</div><div class="line">0.1% 9357/com.taobao.taobao: 0% user + 0% kernel / faults: 4 minor</div><div class="line">0% 13958/me.xiazdong.anrdemo: 0% user + 0% kernel / faults: 5 minor</div><div class="line">0% 119/mmcqd/0: 0% user + 0% kernel</div><div class="line">0% 134/jbd2/mmcblk0p26: 0% user + 0% kernel</div><div class="line">0% 728/RX_Thread: 0% user + 0% kernel</div><div class="line">0% 748/wpa_supplicant: 0% user + 0% kernel</div><div class="line">0% 870/com.android.settings: 0% user + 0% kernel</div><div class="line">0% 903/com.baidu.input_mi: 0% user + 0% kernel / faults: 13 minor</div><div class="line">0% 997/com.miui.whetstone: 0% user + 0% kernel</div><div class="line">0% 1301/com.miui.providers.weather: 0% user + 0% kernel</div><div class="line">0% 3011/com.ttyongche:pushservice: 0% user + 0% kernel</div><div class="line">0% 3152/com.ttyongche: 0% user + 0% kernel / faults: 3 minor</div><div class="line">0% 6088/com.tencent.mm: 0% user + 0% kernel / faults: 12 minor</div><div class="line">0% 10189/android.process.media: 0% user + 0% kernel / faults: 4 minor</div><div class="line">0% 10582/kworker/u:0: 0% user + 0% kernel</div><div class="line">0% 13795/com.android.packageinstaller: 0% user + 0% kernel</div><div class="line">0% 27537/kworker/u:2: 0% user + 0% kernel</div><div class="line">0% 31641/logcat: 0% user + 0% kernel</div><div class="line">123% TOTAL: 67% user + 55% kernel + 0.9% iowait</div></pre></td></tr></table></figure>
+<p>这部分显示在 ANR 发生之前 CPU 使用状况。</p>
+<p>第三部分：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">CPU usage from 3154ms to 3704ms later:</div><div class="line">14% 753/com.android.systemui: 8.7% user + 5.2% kernel</div><div class="line">14% 753/ndroid.systemui: 10% user + 3.5% kernel</div><div class="line">1.7% 11566/GL updater: 0% user + 1.7% kernel</div><div class="line">12% 175/surfaceflinger: 5.4% user + 7.2% kernel / faults: 108 minor</div><div class="line">5.4% 467/SurfaceFlinger: 3.6% user + 1.8% kernel</div><div class="line">1.8% 475/GL updater: 1.8% user + 0% kernel</div><div class="line">1.8% 479/SurfaceFlinger: 0% user + 1.8% kernel</div><div class="line">1.8% 480/EventThread: 0% user + 1.8% kernel</div><div class="line">1.8% 914/Binder_2: 0% user + 1.8% kernel</div><div class="line">1.8% 12653/Binder_5: 0% user + 1.8% kernel</div><div class="line">12% 512/system_server: 5.4% user + 7.2% kernel / faults: 9 minor</div><div class="line">7.2% 670/InputDispatcher: 0% user + 7.2% kernel</div><div class="line">1.8% 656/UEventObserver: 0% user + 1.8% kernel</div><div class="line">1.8% 1019/Binder_B: 1.8% user + 0% kernel</div><div class="line">1.8% 5056/Binder_10: 1.8% user + 0% kernel</div><div class="line">0.8% 252/mpdecision: 0% user + 0.8% kernel</div><div class="line">1.6% 286/mpdecision: 0% user + 1.6% kernel</div><div class="line">1.8% 256/adbd: 0% user + 1.8% kernel / faults: 18 minor</div><div class="line">1.8% 256/adbd: 0% user + 1.8% kernel</div><div class="line">0.8% 305/sensors.qcom: 0.8% user + 0% kernel</div><div class="line">0.8% 478/sensors.qcom: 0.8% user + 0% kernel</div><div class="line">0.9% 3059/com.jianshu.haruki:pushservice: 0.9% user + 0% kernel / faults: 2 minor</div><div class="line">0.9% 3218/Thread-5534: 0.9% user + 0% kernel</div><div class="line">0.9% 3607/com.jianshu.haruki: 0.9% user + 0% kernel</div><div class="line">0.9% 3648/Thread-5534: 0.9% user + 0% kernel</div><div class="line">1.3% 27946/kworker/0:3: 0% user + 1.3% kernel</div><div class="line">13% TOTAL: 6.8% user + 6.8% kernel</div></pre></td></tr></table></figure>
+<p>这部分主要输出 ANR 这段时间内 CPU 使用状况，如果 CPU 使用率特别高，可能就能表明主线程有耗时的计算操作。</p>
+<h3 id="traces-txt"><a href="#traces-txt" class="headerlink" title="traces.txt"></a>traces.txt</h3><p>在查看文件内容之前，我们需要了解线程的所有状态。</p>
+<ul>
+<li>THREAD_ZOMBIE: 线程已经终止了。</li>
+<li>THREAD_RUNNING: 线程是 Runnable 的或者正在运行的。</li>
+<li>THREAD_TIMED_WAIT: 线程调用 <code>Object.wait(long millis)</code> 时阻塞。</li>
+<li>THREAD_MONITOR: 线程在获取锁时阻塞。</li>
+<li>THREAD_WAIT: 线程调用 <code>Object.wait()</code> 时阻塞。</li>
+<li>THREAD_INITIALIZING: 线程还没准备好，不能被运行。</li>
+<li>THREAD_STARTING: 线程还没准备好，不能被运行。</li>
+<li>THREAD_NATIVE: 线程在执行 Native Method。</li>
+<li>THREAD_VMWAIT: 线程在等待 VM 的资源。</li>
+<li>THREAD_SUSPENDED: 线程已经被挂起(暂停)，在等待被恢复(resume)。最典型的状况是GC线程在工作，主线程被挂起。</li>
+</ul>
+<p>状态转换图如下：</p>
+<p><img src="http://i.imgur.com/3lAAAYg.png" width="800px"></p>
+<p>在 traces.txt 文件的开头就是最近这次 ANR 的日志。</p>
+<p>这里我们通过几个例子来看看如何分析日志。</p>
+<p>1、在按钮的 onClick() 中调用 Thread.sleep()，日志如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">DALVIK THREADS (17):</div><div class="line">	&quot;main&quot; prio=5 tid=1 Sleeping ## 表示 ANR 时主线程处于 Sleeping 状态</div><div class="line">| group=&quot;main&quot; sCount=1 dsCount=0 obj=0x73258000 self=0xb4827800</div><div class="line">| sysTid=21428 nice=0 cgrp=default sched=0/0 handle=0xb6f82bec</div><div class="line">| state=S schedstat=( 162539642 60048744 257 ) utm=12 stm=4 core=1 HZ=100</div><div class="line">| stack=0xbe009000-0xbe00b000 stackSize=8MB</div><div class="line">| held mutexes=</div><div class="line">at java.lang.Thread.sleep!(Native method) ## 通过该堆栈可以看出ANR的原因</div><div class="line">- sleeping on &lt;0x02b70dd5&gt; (a java.lang.Object)</div><div class="line">at java.lang.Thread.sleep(Thread.java:1031)</div><div class="line">- locked &lt;0x02b70dd5&gt; (a java.lang.Object)</div><div class="line">at java.lang.Thread.sleep(Thread.java:985)</div><div class="line">at me.xiazdong.anrdemo.MainActivity.clickHandler(MainActivity.java:20)</div><div class="line">at java.lang.reflect.Method.invoke!(Native method)</div><div class="line">at java.lang.reflect.Method.invoke(Method.java:372)</div><div class="line">at android.view.View$1.onClick(View.java:4015)</div></pre></td></tr></table></figure>
+<p>2、主线程和子线程产生死锁，日志如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">&quot;main&quot; prio=5 tid=1 MONITOR  ## MONITOR 表示线程是 BLOCKED 状态，即被阻塞住了。</div><div class="line">| group=&quot;main&quot; sCount=1 dsCount=0 obj=0x417bd700 self=0x400310b0</div><div class="line">| sysTid=13958 nice=0 sched=0/0 cgrp=apps handle=1074507568</div><div class="line">| schedstat=( 0 0 0 ) utm=25 stm=6 core=0</div><div class="line">at me.xiazdong.anrdemo.MainActivity.clickHandler(MainActivity.java:~46) 	## 发生问题的地方是 clickHandler 方法</div><div class="line">- waiting to lock &lt;0x425a0530&gt; (a java.lang.Object) held by tid=11 (Thread-3849) ## 主线程正在等待 Thread-3849 线程拥有的资源</div><div class="line">at java.lang.reflect.Method.invokeNative(Native Method)</div><div class="line">at java.lang.reflect.Method.invoke(Method.java:511)</div><div class="line">at android.view.View$1.onClick(View.java:3671)</div><div class="line"></div><div class="line">----------------------------</div><div class="line"></div><div class="line">&quot;Thread-3849&quot; prio=5 tid=11 MONITOR</div><div class="line">| group=&quot;main&quot; sCount=1 dsCount=0 obj=0x425e6150 self=0x67f36008</div><div class="line">| sysTid=13992 nice=0 sched=0/0 cgrp=apps handle=1716642824</div><div class="line">| schedstat=( 0 0 0 ) utm=0 stm=0 core=0</div><div class="line">at me.xiazdong.anrdemo.MainActivity$1.run(MainActivity.java:~31) </div><div class="line">- waiting to lock &lt;0x425a0520&gt; (a java.lang.Object) held by tid=1 (main) ## Thread-3849 线程在等待主线程拥有的资源</div></pre></td></tr></table></figure>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="http://stackoverflow.com/questions/704311/android-how-do-i-investigate-an-anr" target="_blank" rel="external">StackOverflow: 怎么分析 ANR</a></li>
+<li><a href="http://elliotth.blogspot.com/2012/08/how-to-read-dalvik-sigquit-output.html" target="_blank" rel="external">解释线程的所有状态</a></li>
+<li><a href="http://droidyue.com/blog/2015/07/18/anr-in-android/" target="_blank" rel="external">说说Android中的ANR</a></li>
+</ul>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2015/08/12/JVM内存模型/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2015/09/12/为什么Major GC比Minor GC慢很多？/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>为什么 Major GC 比 Minor GC 慢很多？ | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="前言前几天面试的时候有面试官问我：为什么 Major GC 比 Minor GC 慢很多？ 原因如下：  新生代内存空间比老年代小。 新生代和老年代采用的垃圾收集算法不同，即新生代采用的 Copying 算法比老年代采用的 Mark-Sweep 算法耗时更短。   Major GC, Minor GC, 新生代, 老年代的概念请看：http://xiazdong.me/2015/01/03/jvm">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="为什么 Major GC 比 Minor GC 慢很多？">
+<meta property="og:url" content="http://xiazdong.github.io/2015/09/12/为什么Major GC比Minor GC慢很多？/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="前言前几天面试的时候有面试官问我：为什么 Major GC 比 Minor GC 慢很多？ 原因如下：  新生代内存空间比老年代小。 新生代和老年代采用的垃圾收集算法不同，即新生代采用的 Copying 算法比老年代采用的 Mark-Sweep 算法耗时更短。   Major GC, Minor GC, 新生代, 老年代的概念请看：http://xiazdong.me/2015/01/03/jvm">
+<meta property="og:image" content="http://i.imgur.com/PyR1o2a.png">
+<meta property="og:updated_time" content="2017-05-17T00:53:47.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="为什么 Major GC 比 Minor GC 慢很多？">
+<meta name="twitter:description" content="前言前几天面试的时候有面试官问我：为什么 Major GC 比 Minor GC 慢很多？ 原因如下：  新生代内存空间比老年代小。 新生代和老年代采用的垃圾收集算法不同，即新生代采用的 Copying 算法比老年代采用的 Mark-Sweep 算法耗时更短。   Major GC, Minor GC, 新生代, 老年代的概念请看：http://xiazdong.me/2015/01/03/jvm">
+<meta name="twitter:image" content="http://i.imgur.com/PyR1o2a.png">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#原理分析"><span class="toc-text">原理分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Mark-Sweep-算法"><span class="toc-text">Mark-Sweep 算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Mark-Compact-算法"><span class="toc-text">Mark-Compact 算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Copying-算法"><span class="toc-text">Copying 算法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#各算法时间比较"><span class="toc-text">各算法时间比较</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-为什么Major GC比Minor GC慢很多？" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">为什么 Major GC 比 Minor GC 慢很多？</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2015.09.12</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>前几天面试的时候有面试官问我：为什么 Major GC 比 Minor GC 慢很多？</p>
+<p>原因如下：</p>
+<ul>
+<li>新生代内存空间比老年代小。</li>
+<li>新生代和老年代采用的垃圾收集算法不同，即新生代采用的 Copying 算法比老年代采用的 Mark-Sweep 算法耗时更短。</li>
+</ul>
+<blockquote>
+<p>Major GC, Minor GC, 新生代, 老年代的概念请看：<a href="http://xiazdong.me/2015/01/03/jvm-memory-model/" target="_blank" rel="external">http://xiazdong.me/2015/01/03/jvm-memory-model/</a>。</p>
+</blockquote>
+<h2 id="原理分析"><a href="#原理分析" class="headerlink" title="原理分析"></a>原理分析</h2><ul>
+<li>新生代一般采用 Copying 算法进行垃圾收集。</li>
+<li>老年代一般采用 Mark-Sweep 或 Mark-Compact 或两者组合的方式(定期进行 Compact)进行垃圾收集。</li>
+</ul>
+<h3 id="Mark-Sweep-算法"><a href="#Mark-Sweep-算法" class="headerlink" title="Mark-Sweep 算法"></a>Mark-Sweep 算法</h3><p>这个算法共有两个步骤：</p>
+<ul>
+<li>Mark: 从 GC Roots 开始遍历可达的所有节点，并对其标记。因此时间复杂度为存活对象的个数。</li>
+<li>Sweep: 对整个老年代内存进行遍历，并将没标记的内存块进行清理。</li>
+</ul>
+<p>伪代码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">for</span>(Object obj : reachable objects)</div><div class="line">	mark(obj)</div><div class="line"><span class="keyword">for</span>(Object obj : old generation)</div><div class="line">	<span class="keyword">if</span>(obj is not marked)</div><div class="line">		sweep(obj)</div></pre></td></tr></table></figure>
+<p>Mark-Sweep 算法的优点是简单方便，缺点是造成内存碎片。</p>
+<h3 id="Mark-Compact-算法"><a href="#Mark-Compact-算法" class="headerlink" title="Mark-Compact 算法"></a>Mark-Compact 算法</h3><p>由于 Mark-Sweep 算法会导致内存碎片化，因此就引入了 Mark-Compact 算法，该算法执行完毕后，存活的对象会按序放置，但是执行时间较长。</p>
+<p>Mark-Compact 是 <strong>时间换空间</strong>，Copying 是 <strong>空间换时间</strong>，他和 Copying 算法最后都是将存活的对象整理，但是 Mark-Compact 由于要在原有内存上做 Compact(空间更小)，因此耗费的时间比 Copying 时间更长(时间更长)。</p>
+<p>这个算法共两个步骤：</p>
+<ul>
+<li>Mark: 从 GC Roots 开始遍历可达的所有节点，并对其标记。因此时间复杂度为存活对象的个数。</li>
+<li>Compact: 对整个老年代内存进行遍历，并将没标记的内存块进行清理。</li>
+</ul>
+<p>伪代码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">for</span>(Object obj : reachable objects)</div><div class="line">	mark(obj)</div><div class="line"><span class="keyword">for</span>(Object obj : old generation)</div><div class="line">	<span class="keyword">if</span>(obj is not marked)</div><div class="line">		compact(obj)</div></pre></td></tr></table></figure>
+<h3 id="Copying-算法"><a href="#Copying-算法" class="headerlink" title="Copying 算法"></a>Copying 算法</h3><p><img src="http://i.imgur.com/PyR1o2a.png" width="600px"></p>
+<p>Copying 算法是新生代采用的垃圾收集算法，他将新生代内存分成两块(或多块)，每次只使用其中的一块。因此浪费了一倍的内存空间，但是由于新生代的内存空间相比老年代较小，因此浪费一倍也还好。</p>
+<p>该算法就是 Mark-Sweep 算法的 Mark 阶段：遍历一遍 GC Roots 可达的所有节点(假设这些节点都在块1)，但是在遍历节点的同时，将该节点按序复制到新生代的另一块内存(块2)。当遍历完所有可达节点后，一次性将块1的内存清理干净。</p>
+<p>伪代码如下：</p>
+<figure class="highlight"><table><tr><td class="code"><pre><div class="line">for(Object obj : reachable objects) # reachable objects is in block 1</div><div class="line">	mark(obj)</div><div class="line">	copy obj to block 2</div><div class="line">sweep block 1</div></pre></td></tr></table></figure>
+<p>Copying 算法的复杂度依赖于存活对象的个数，如果存活的对象太多，那么复制操作会占用很长时间，但是由于新生代具有存活对象很少的特点，因此该算法适用于新生代的垃圾收集。</p>
+<p>Copying 算法的优点是一次遍历即可完成，缺点是如果存活对象很多，那么复制操作会很耗时。</p>
+<h3 id="各算法时间比较"><a href="#各算法时间比较" class="headerlink" title="各算法时间比较"></a>各算法时间比较</h3><p>上面介绍了 Mark-Sweep, Mark-Compact, Copying 三种算法，总体来说可以归纳为：</p>
+<ul>
+<li>Mark-Sweep = Mark 操作 + Sweep 操作。</li>
+<li>Mark-Compact = Mark 操作 + Compact 操作。</li>
+<li>Copying = Mark 操作 + Copy 操作。</li>
+</ul>
+<p>这些操作的耗时比较：</p>
+<ul>
+<li>Compact &gt; Copy &gt; Mark &gt; Sweep</li>
+<li>Mark + Sweep &gt; Copy</li>
+</ul>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="http://hllvm.group.iteye.com/group/topic/28594" target="_blank" rel="external">Mark-Sweep 和 Copy 算法的区别(1)</a></li>
+<li><a href="http://hllvm.group.iteye.com/group/topic/38223#post-248757" target="_blank" rel="external">Mark-Sweep 和 Copy 算法的区别(2)</a></li>
+<li><a href="http://www.cnblogs.com/redcreen/archive/2011/05/04/2037057.html" target="_blank" rel="external">JVM系列三:JVM参数设置、分析</a></li>
+</ul>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2015/09/11/如何分析 ANR 的原因/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2015/09/17/JNI和NDK入门/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>
