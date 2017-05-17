@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>Picasso使用入门 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="前言图片加载是 Android 开发经常要实现的功能，而这也是谈到 Android 性能优化问题时不得不提的问题，而 Picasso 项目就是帮助我们解决这个问题的，而我在网上搜也没找到比较全面关于 Picasso 的中文教程，因此这里就写一篇关于 Picasso 这个开源项目的介绍。 Picasso 基本介绍 项目地址：https://github.com/square/picasso 项目定位">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Picasso使用入门">
+<meta property="og:url" content="http://xiazdong.github.io/2014/10/03/2014-10-03-picasso-tutorial/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="前言图片加载是 Android 开发经常要实现的功能，而这也是谈到 Android 性能优化问题时不得不提的问题，而 Picasso 项目就是帮助我们解决这个问题的，而我在网上搜也没找到比较全面关于 Picasso 的中文教程，因此这里就写一篇关于 Picasso 这个开源项目的介绍。 Picasso 基本介绍 项目地址：https://github.com/square/picasso 项目定位">
+<meta property="og:image" content="http://square.github.io/picasso/static/debug.png">
+<meta property="og:image" content="http://i.imgur.com/BlGZBYY.gif">
+<meta property="og:updated_time" content="2017-05-17T01:16:20.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Picasso使用入门">
+<meta name="twitter:description" content="前言图片加载是 Android 开发经常要实现的功能，而这也是谈到 Android 性能优化问题时不得不提的问题，而 Picasso 项目就是帮助我们解决这个问题的，而我在网上搜也没找到比较全面关于 Picasso 的中文教程，因此这里就写一篇关于 Picasso 这个开源项目的介绍。 Picasso 基本介绍 项目地址：https://github.com/square/picasso 项目定位">
+<meta name="twitter:image" content="http://square.github.io/picasso/static/debug.png">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Picasso-基本介绍"><span class="toc-text">Picasso 基本介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#优点"><span class="toc-text">优点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#基本使用方法"><span class="toc-text">基本使用方法</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1、加载图片到-ImageView"><span class="toc-text">1、加载图片到 ImageView</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2、加载图片并自定义动作"><span class="toc-text">2、加载图片并自定义动作</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3、对图片进行变换"><span class="toc-text">3、对图片进行变换</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#案例-实现异步加载图片的ListView"><span class="toc-text">案例: 实现异步加载图片的ListView</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-2014-10-03-picasso-tutorial" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">Picasso使用入门</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2014.10.03</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>图片加载是 Android 开发经常要实现的功能，而这也是谈到 Android 性能优化问题时不得不提的问题，而 Picasso 项目就是帮助我们解决这个问题的，而我在网上搜也没找到比较全面关于 Picasso 的中文教程，因此这里就写一篇关于 Picasso 这个开源项目的介绍。</p>
+<h2 id="Picasso-基本介绍"><a href="#Picasso-基本介绍" class="headerlink" title="Picasso 基本介绍"></a>Picasso 基本介绍</h2><ul>
+<li>项目地址：<a href="https://github.com/square/picasso" target="_blank" rel="external">https://github.com/square/picasso</a></li>
+<li>项目定位：A powerful image downloading and caching library for Android，即实现图片加载、图片缓存的功能。</li>
+<li>该项目的依赖项目有：okHttp, okHttp-urlConnection, okio。如果通过jar包方式添加则需要注意版本，本文用的版本是：Picasso 2.3.4, okHttp 2.0.0, okHttp-urlConnection 2.0.0, okio 1.0.0；如果通过 gradle 添加那么依赖就自动添加进来了。</li>
+<li>很多人会把它和 UIL 项目比较，如果你刚刚接触图片异步加载，则我比较推荐 Picasso，因为使用起来太方便了。</li>
+</ul>
+<h2 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h2><p>1、<strong>入门简单</strong>：一般为了实现一个图片异步加载的功能，少说必须要使用：AsyncTask, LruCache, DiskCache, BitmapFactory 等等，实现起来还是有难度的，但是 Picasso 只需要一行代码即可实现图片异步加载：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Picasso.with(context).load(<span class="string">"http://i.imgur.com/DvpvklR.png"</span>).into(imageView);</div></pre></td></tr></table></figure>
+<p>是不是非常方便。</p>
+<p>2、<strong>自动取消Adapter的下载任务</strong>：一般来说我们在实现 ListView 时会重用 view，比如第10个位置的 view 重用第1个位置的 view，当从第1个位置快速滑到第10个位置时，虽然第1个位置的图片还没下载好，Picasso 能够帮我们自动取消第1个位置的下载任务，开始第10个位置的下载任务，我们只需要管业务逻辑即可。</p>
+<p>3、<strong>利用最少的内存对图片进行变换</strong>：简单的 API 即可实现图片的旋转、改变大小等简单变换，还能够自定义变换。</p>
+<p>4、<strong>自动进行内存和磁盘的缓存</strong>: 不需要自己实现缓存(缺点是不能设定缓存大小)，当然你在加载图片时也可以设置成不使用缓存(skipMemoryCache)。</p>
+<p>5、<strong>提供很好的调试界面</strong>：如果开启调试模式，则如果图片是从网络中获得，则图片左上角会有红色三角形；如果图片从磁盘获得，则图片左上角会有黄色三角形；如果图片从内存获得，则图片左上角会有绿色三角形。如图所示：<br><img src="http://square.github.io/picasso/static/debug.png" alt=""></p>
+<p>6、<strong>支持通过资源id、本地文件、网络载入图片</strong>: <code>load()</code> 函数即可实现从不同的来源载入图片。</p>
+<h2 id="基本使用方法"><a href="#基本使用方法" class="headerlink" title="基本使用方法"></a>基本使用方法</h2><p>一般我遇到的需要实现的功能就是三个：</p>
+<ul>
+<li>简单实现异步加载图片到 ImageView，并在图片加载成功或失败时有个回调，即当图片加载成功时可以自定义一些操作，当图片加载失败时可以自定义一些操作。</li>
+<li>下载图片并保存到本地。</li>
+<li>对加载的图片进行变换。</li>
+</ul>
+<p>接下去我将会介绍常用的一些函数。</p>
+<h3 id="1、加载图片到-ImageView"><a href="#1、加载图片到-ImageView" class="headerlink" title="1、加载图片到 ImageView"></a>1、加载图片到 ImageView</h3><figure class="highlight java"><table><tr><td class="code"><pre><div class="line">ImageView view = <span class="keyword">null</span>;</div><div class="line">Picasso picasso = Picasso.with(<span class="keyword">this</span>);</div><div class="line">picasso.setIndicatorsEnabled(<span class="keyword">true</span>);   <span class="comment">//开启调模式，它能够在图片左上角显示小三角形，这个小三角形的颜色标明了图片的来源：网络、内存缓存、磁盘缓存</span></div><div class="line">picasso.setLoggingEnabled(<span class="keyword">true</span>);  <span class="comment">//打开日志，即log中会打印出目前下载的进度、情况</span></div><div class="line">picasso.load(<span class="string">"http://xxx.jpg"</span>)    <span class="comment">//可以是本地图片或网络图片</span></div><div class="line">       .placeholder(R.drawable.placeholder)   <span class="comment">//当图片正在加载时显示的图片(optional)</span></div><div class="line">       .error(R.drawable.error)   		<span class="comment">//当图片加载失败时显示的图片(optional)</span></div><div class="line">       .into(view, <span class="keyword">new</span> Callback() &#123;   <span class="comment">//将图片下载完后放进view中，回调是可选的</span></div><div class="line">           <span class="meta">@Override</span></div><div class="line">           <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onSuccess</span><span class="params">()</span> </span>&#123;</div><div class="line">               <span class="comment">//加载图片成功时回调</span></div><div class="line">           &#125;</div><div class="line">           <span class="meta">@Override</span></div><div class="line">           <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onError</span><span class="params">()</span> </span>&#123;</div><div class="line">               <span class="comment">//加载图片失败时回调</span></div><div class="line">           &#125;</div><div class="line">       &#125;);</div></pre></td></tr></table></figure>
+<h3 id="2、加载图片并自定义动作"><a href="#2、加载图片并自定义动作" class="headerlink" title="2、加载图片并自定义动作"></a>2、加载图片并自定义动作</h3><figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Target target = <span class="keyword">new</span> Target()&#123;</div><div class="line">      <span class="meta">@Override</span></div><div class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onBitmapLoaded</span><span class="params">(Bitmap bitmap, Picasso.LoadedFrom loadedFrom)</span> </span>&#123;</div><div class="line">             <span class="comment">//当图片加载成功时调用，bitmap是加载的图片,loadFrom 标明图片的来源是网络、内存还是磁盘</span></div><div class="line">             <span class="comment">//可以在里面执行把图片保存到本地的操作</span></div><div class="line">      &#125;</div><div class="line">      <span class="meta">@Override</span></div><div class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onBitmapFailed</span><span class="params">(Drawable errorDrawable)</span> </span>&#123;   <span class="comment">//当图片加载失败时调用</span></div><div class="line">      &#125;</div><div class="line">      <span class="meta">@Override</span></div><div class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onPrepareLoad</span><span class="params">(Drawable placeHolderDrawable)</span> </span>&#123;    <span class="comment">//当任务被提交时调用</span></div><div class="line">      &#125;</div><div class="line">&#125;;</div><div class="line">picasso.load(<span class="keyword">new</span> File(<span class="string">"/1.jpg"</span>)).into(target); <span class="comment">//指定target任务加载图片</span></div></pre></td></tr></table></figure>
+<h3 id="3、对图片进行变换"><a href="#3、对图片进行变换" class="headerlink" title="3、对图片进行变换"></a>3、对图片进行变换</h3><figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Transformation transformation = <span class="keyword">new</span> Transformation() &#123;</div><div class="line">     <span class="meta">@Override</span></div><div class="line">     <span class="function"><span class="keyword">public</span> Bitmap <span class="title">transform</span><span class="params">(Bitmap bitmap)</span> </span>&#123;</div><div class="line">        Bitmap newBitmap = <span class="keyword">null</span>;</div><div class="line">        <span class="comment">//自定义变换</span></div><div class="line">        <span class="keyword">if</span>(bitmap != <span class="keyword">null</span> &amp;&amp; !bitmap.isRecycled())&#123;   <span class="comment">//将旧图片回收</span></div><div class="line">            bitmap.recycle();</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> newBitmap;</div><div class="line">     &#125;</div><div class="line"></div><div class="line">     <span class="meta">@Override</span></div><div class="line">     <span class="function"><span class="keyword">public</span> String <span class="title">key</span><span class="params">()</span> </span>&#123; <span class="comment">// 将用作cache的key</span></div><div class="line">        <span class="keyword">return</span> <span class="string">"key"</span>;</div><div class="line">     &#125;</div><div class="line">&#125;;</div><div class="line">picasso.load(R.drawable.download)</div><div class="line">		   .skipMemoryCache()	<span class="comment">//不要把加载的图片放入缓存，也不要从缓存中取图片</span></div><div class="line">        .transform(transformation)    <span class="comment">//执行自定义变换</span></div><div class="line">        .into(view);</div></pre></td></tr></table></figure>
+<h2 id="案例-实现异步加载图片的ListView"><a href="#案例-实现异步加载图片的ListView" class="headerlink" title="案例: 实现异步加载图片的ListView"></a>案例: 实现异步加载图片的ListView</h2><p>效果如下：</p>
+<p><img src="http://i.imgur.com/BlGZBYY.gif" width="300"></p>
+<p>我们使用到了<a href="http://blog.csdn.net/lmj623565791/article/details/38902805" target="_blank" rel="external">通用适配器技术</a>（实现代码为 <a href="https://github.com/xiazdong/CommonAdapter" target="_blank" rel="external">CommonAdapter</a> 项目），使得我们的主要代码只有30+行：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SimpleListActivity</span> <span class="keyword">extends</span> <span class="title">Activity</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">        <span class="keyword">super</span>.onCreate(savedInstanceState);</div><div class="line">        setContentView(R.layout.activity_simple_list);</div><div class="line">        List&lt;DataItem&gt; datas = getSampleDatas();</div><div class="line">        ListView listView = (ListView)findViewById(R.id.list);</div><div class="line">        Picasso.with(<span class="keyword">this</span>).setIndicatorsEnabled(<span class="keyword">true</span>);</div><div class="line">        listView.setAdapter(<span class="keyword">new</span> CommonAdapter&lt;DataItem&gt;(<span class="keyword">this</span>,datas,R.layout.item_list) &#123;</div><div class="line">            <span class="meta">@Override</span></div><div class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">convert</span><span class="params">(ViewHolder holder, DataItem item,<span class="keyword">int</span> position)</span> </span>&#123;</div><div class="line">                holder.setText(R.id.text,item.name);</div><div class="line">                holder.setImage(R.id.image,item.url,<span class="keyword">null</span>);  <span class="comment">//setImage 函数中使用了 Picasso 库 </span></div><div class="line">            &#125;</div><div class="line">        &#125;);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">private</span> List&lt;DataItem&gt; <span class="title">getSampleDatas</span><span class="params">()</span> </span>&#123;</div><div class="line">        List&lt;DataItem&gt; datas = <span class="keyword">new</span> ArrayList&lt;DataItem&gt;();</div><div class="line">        String[] urls = getResources().getStringArray(R.array.urls);</div><div class="line">        <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; urls.length; i++)&#123;</div><div class="line">            DataItem item = <span class="keyword">new</span> DataItem(urls[i],urls[i]);</div><div class="line">            datas.add(item);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> datas;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">DataItem</span></span>&#123;</div><div class="line">    String url;</div><div class="line">    String name;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">DataItem</span><span class="params">(String url, String name)</span></span>&#123;</div><div class="line">        <span class="keyword">this</span>.url = url;</div><div class="line">        <span class="keyword">this</span>.name = name;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li>官方文档：<a href="http://square.github.io/picasso/" target="_blank" rel="external">http://square.github.io/picasso/</a></li>
+<li>Picasso Javadoc：<a href="http://square.github.io/picasso/javadoc/index.html" target="_blank" rel="external">http://square.github.io/picasso/javadoc/index.html</a></li>
+<li>详细使用教程：<a href="http://www.opensourcealternative.org/tutorials/android-tutorials/android-picasso-save-image-tutorial/" target="_blank" rel="external">http://www.opensourcealternative.org/tutorials/android-tutorials/android-picasso-save-image-tutorial/</a></li>
+<li>简单使用方法：<a href="http://blog.chengyunfeng.com/?p=492" target="_blank" rel="external">http://blog.chengyunfeng.com/?p=492</a></li>
+<li>内部实现分析：<a href="http://blog.csdn.net/xu_fu/article/details/17043231" target="_blank" rel="external">http://blog.csdn.net/xu_fu/article/details/17043231</a></li>
+</ul>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="hide pull-left" href="/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2014/11/27/代理模式及Java实现动态代理/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>
