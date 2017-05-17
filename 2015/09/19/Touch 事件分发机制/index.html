@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>Touch 事件分发机制 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="前言Touch 事件分发机制是面试中非常常见的问题，也是非常重要的问题。网上有很多关于这方面的文章，但是感觉写的不是特别清晰易懂。 基本概念Touch 事件分发机制分发的是 MotionEvent 对象，取值如下：  ACTION_DOWN: 按下事件。 ACTION_MOVE: 移动事件。 ACTION_UP: 抬起事件。  一个事件序列包含 ACTION_DOWN-&amp;gt;ACTION_MOV">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Touch 事件分发机制">
+<meta property="og:url" content="http://xiazdong.github.io/2015/09/19/Touch 事件分发机制/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="前言Touch 事件分发机制是面试中非常常见的问题，也是非常重要的问题。网上有很多关于这方面的文章，但是感觉写的不是特别清晰易懂。 基本概念Touch 事件分发机制分发的是 MotionEvent 对象，取值如下：  ACTION_DOWN: 按下事件。 ACTION_MOVE: 移动事件。 ACTION_UP: 抬起事件。  一个事件序列包含 ACTION_DOWN-&amp;gt;ACTION_MOV">
+<meta property="og:updated_time" content="2017-05-17T14:35:16.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Touch 事件分发机制">
+<meta name="twitter:description" content="前言Touch 事件分发机制是面试中非常常见的问题，也是非常重要的问题。网上有很多关于这方面的文章，但是感觉写的不是特别清晰易懂。 基本概念Touch 事件分发机制分发的是 MotionEvent 对象，取值如下：  ACTION_DOWN: 按下事件。 ACTION_MOVE: 移动事件。 ACTION_UP: 抬起事件。  一个事件序列包含 ACTION_DOWN-&amp;gt;ACTION_MOV">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#基本概念"><span class="toc-text">基本概念</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#总体分发流程"><span class="toc-text">总体分发流程</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#View-Touch-事件分发"><span class="toc-text">View Touch 事件分发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ViewGroup-Touch-事件分发"><span class="toc-text">ViewGroup Touch 事件分发</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#一些结论的验证"><span class="toc-text">一些结论的验证</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-Touch 事件分发机制" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">Touch 事件分发机制</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2015.09.19</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>Touch 事件分发机制是面试中非常常见的问题，也是非常重要的问题。网上有很多关于这方面的文章，但是感觉写的不是特别清晰易懂。</p>
+<h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><p>Touch 事件分发机制分发的是 MotionEvent 对象，取值如下：</p>
+<ul>
+<li>ACTION_DOWN: 按下事件。</li>
+<li>ACTION_MOVE: 移动事件。</li>
+<li>ACTION_UP: 抬起事件。</li>
+</ul>
+<p>一个事件序列包含 <code>ACTION_DOWN-&gt;ACTION_MOVE-&gt;...-&gt;ACTION_MOVE-&gt;ACTION_UP</code>，即用户触摸屏幕，移动一些距离，然后抬起。</p>
+<blockquote>
+<ol>
+<li>下面说的 view “处理” 了某个事件，表示 view 调用了 onTouchEvent()。</li>
+<li>下面说的 view “消费” 了某个事件，表示 view 调用了 onTouchEvent() 并返回 true。因此某个 view 可以处理但不消费某个事件。</li>
+</ol>
+</blockquote>
+<p>Touch 事件分发机制涉及三个方法：</p>
+<ul>
+<li><code>dispatchTouchEvent(MotionEvent ev)</code>: 如果某个触摸事件传递给了某个 View 或 ViewGroup(设为 v)，则一定会调用 v.dispatchTouchEvent()，如果 v 是 ViewGroup，则内部会调用 onInterceptTouchEvent() 或 onTouchEvent()；如果 v 是 View，则内部会调用 onTouchEvent()。</li>
+<li><code>onInterceptTouchEvent(MotionEvent ev)</code>: 这个方法只有 ViewGroup 才有，判断是否要拦截该事件并且自己处理，如果返回 true，则拦截；如果返回 false，则不拦截。</li>
+<li><code>onTouchEvent(MotionEvent ev)</code>: 处理 Touch 事件的核心方法，如果返回 true，表示消费了事件；如果返回 false，则表示没消费该事件。</li>
+</ul>
+<p>ViewGroup 的 dispatchTouchEvent(), onInterceptTouchEvent(), onTouchEvent() 的基本关系如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">dispatchTouchEvent</span><span class="params">(MotionEvent ev)</span></span>&#123;</div><div class="line">    <span class="keyword">boolean</span> consume = <span class="keyword">false</span>;</div><div class="line">    <span class="keyword">if</span>(onInterceptTouchEvent(ev))&#123;  <span class="comment">//是否拦截</span></div><div class="line">        consume = onTouchEvent(ev); <span class="comment">//如果拦截，则自己处理</span></div><div class="line">    &#125;</div><div class="line">    <span class="keyword">else</span>&#123;  <span class="comment">//如果没拦截，则事件分发给孩子</span></div><div class="line">        consume = child.dispatchTouchEvent(ev);</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> consume;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面的代码只是基本概括了整个事件分发的核心流程，具体实现细节会在下面介绍。</p>
+<h2 id="总体分发流程"><a href="#总体分发流程" class="headerlink" title="总体分发流程"></a>总体分发流程</h2><p>当用户发起触摸事件后，首先触摸事件从 Activity 的 dispatchTouchEvent() 开始，该方法实现如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">dispatchTouchEvent</span><span class="params">(MotionEvent ev)</span> </span>&#123;</div><div class="line">    <span class="keyword">if</span> (getWindow().superDispatchTouchEvent(ev)) &#123;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> onTouchEvent(ev);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>解释：</p>
+<ul>
+<li>其中 getWindow().superDispatchTouchEvent() 会调用 DecorView 的 dispatchTouchEvent() 开始分发，接着 DecorView 会调用根 View 进行事件分发。</li>
+<li>如果 getWindow().superDispatchTouchEvent() 返回 true，表示有子 View 消费了该触摸事件；如果返回 false，表示没有任何子 View 消费该事件，会调用 Activity 的 onTouchEvent()，即 Activity 自己处理 Touch 事件，并返回 false。</li>
+</ul>
+<h2 id="View-Touch-事件分发"><a href="#View-Touch-事件分发" class="headerlink" title="View Touch 事件分发"></a>View Touch 事件分发</h2><p>因为 ViewGroup 也是继承自 View，因此此处分两种情况讨论。</p>
+<ul>
+<li>如果是最底层的 View，一旦将触摸事件分发给他，就会调用下面的 dispatchTouchEvent()；</li>
+<li>如果是 ViewGroup，则默认并不会调用下面的 dispatchTouchEvent()，而是会调用 ViewGroup 自己的 dispatchTouchEvent()，只有当 ViewGroup 在自己的 dispatchTouchEvent() 方法中经过判断，发现需要自己处理触摸事件时，才会通过 <code>super.dispatchTouchEvent(ev)</code> 的形式调用下面的 dispatchTouchEvent()。</li>
+</ul>
+<p>View 的 dispatchTouchEvent() 实现如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">dispatchTouchEvent</span><span class="params">(MotionEvent event)</span> </span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">if</span> (li != <span class="keyword">null</span> &amp;&amp; li.mOnTouchListener != <span class="keyword">null</span> &amp;&amp; (mViewFlags &amp; ENABLED_MASK) == ENABLED</div><div class="line">            &amp;&amp; li.mOnTouchListener.onTouch(<span class="keyword">this</span>, event)) </div><div class="line">    &#123;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span> (onTouchEvent(event)) </div><div class="line">    &#123;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>从上面看出：</p>
+<ul>
+<li>onTouchEvent() 不一定会被调用。如果设置了 OnTouchListener， View 是 enabled，并且 OnTouchListener 的 onTouch() 返回 true，则不会调用 onTouchEvent()。</li>
+<li>如果 View 是 DISABLED，则 onTouch() 不会被调用。</li>
+<li>如果 OnTouchListener 的 onTouch() 或 View 的 onTouchEvent() 返回 true，则 dispatchTouchEvent() 返回 true；否则返回 false。</li>
+</ul>
+<p>接着我们看看 onTouchEvent() 的实现：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">onTouchEvent</span><span class="params">(MotionEvent event)</span> </span>&#123;</div><div class="line">	<span class="keyword">if</span> (((viewFlags &amp; CLICKABLE) == CLICKABLE || (viewFlags &amp; LONG_CLICKABLE) == LONG_CLICKABLE)) &#123;</div><div class="line">    	<span class="keyword">switch</span> (event.getAction()) &#123;</div><div class="line">        	<span class="keyword">case</span> MotionEvent.ACTION_UP:</div><div class="line">        		performClick();   <span class="comment">//执行 mClickListener.onClick() 方法</span></div><div class="line">        		<span class="keyword">break</span>;</div><div class="line">        	<span class="keyword">case</span> MotionEvent.ACTION_DOWN:</div><div class="line">        		...</div><div class="line">        		<span class="keyword">break</span>;</div><div class="line">        	<span class="keyword">case</span> MotionEvent.ACTION_MOVE:</div><div class="line">        		...</div><div class="line">        		<span class="keyword">break</span>;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> <span class="keyword">true</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>从上面可以看出：</p>
+<ul>
+<li>onTouchEvent() 内部在 ACTION_UP 事件中调用了 onClick()(即在一个事件序列中，只有在 ACTION_UP 才会调用 onClick()，但是 onTouch() 在每个事件都会被调用)，即如果同时注册了 OnTouchListener 和 OnClickListener，则 OnTouchListener 优先级高于 OnClickListener，如果 onTouch() 返回 true，则 onTouchEvent() 不会执行，也就意味着 onClick() 不会执行。</li>
+<li>在 onTouchEvent() 中，只有 View 是 Clickable 的，才能进入 if 语句，而且一旦进入 if 语句就返回 true。比如 Button 是 Clickable 的，因此 onTouchEvent() 一定返回 true，ImageView 是不可点击的，因此 onTouchEvent() 一定返回 false。</li>
+</ul>
+<h2 id="ViewGroup-Touch-事件分发"><a href="#ViewGroup-Touch-事件分发" class="headerlink" title="ViewGroup Touch 事件分发"></a>ViewGroup Touch 事件分发</h2><p>ViewGroup 的 dispatchTouchEvent() 比较复杂，下面我们分析一下。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">dispatchTouchEvent</span><span class="params">(MotionEvent ev)</span> </span>&#123;</div><div class="line">	<span class="keyword">boolean</span> handled = <span class="keyword">false</span>;</div><div class="line">	<span class="comment">// 1、如果是 ACTION_DOWN 动作，则清除标志位。</span></div><div class="line">    <span class="keyword">if</span> (actionMasked == MotionEvent.ACTION_DOWN) &#123;</div><div class="line">        cancelAndClearTouchTargets(ev);</div><div class="line">        resetTouchState();	<span class="comment">// 清除 FLAG_DISALLOW_INTERCEPT 标记位</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// 2、判断是否要拦截该事件</span></div><div class="line">    <span class="keyword">final</span> <span class="keyword">boolean</span> intercepted;</div><div class="line">    <span class="keyword">if</span>(actionMasked == MotionEvent.ACTION_DOWN || mFirstTouchTarget != <span class="keyword">null</span>)&#123;</div><div class="line">    	<span class="keyword">final</span> <span class="keyword">boolean</span> disallowIntercept = (mGroupFlags &amp; FLAG_DISALLOW_INTERCEPT) != <span class="number">0</span>;</div><div class="line">        <span class="keyword">if</span> (!disallowIntercept) &#123;</div><div class="line">            intercepted = onInterceptTouchEvent(ev);</div><div class="line">            ev.setAction(action);</div><div class="line">        &#125; <span class="keyword">else</span> &#123;</div><div class="line">            intercepted = <span class="keyword">false</span>;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">else</span>&#123;</div><div class="line">        intercepted = <span class="keyword">true</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// 3、如果不拦截，则传给子 View</span></div><div class="line">    TouchTarget newTouchTarget = <span class="keyword">null</span>;</div><div class="line">    <span class="keyword">boolean</span> alreadyDispatchedToNewTouchTarget = <span class="keyword">false</span>;</div><div class="line">    <span class="keyword">if</span> (!canceled &amp;&amp; !intercepted) &#123;</div><div class="line">        <span class="keyword">if</span> (actionMasked == MotionEvent.ACTION_DOWN)&#123;</div><div class="line">        	  <span class="keyword">final</span> View[] children = mChildren;</div><div class="line">            <span class="keyword">for</span> (<span class="keyword">int</span> i = childrenCount - <span class="number">1</span>; i &gt;= <span class="number">0</span>; i--) &#123;</div><div class="line">            	<span class="keyword">final</span> View child = children[childIndex];</div><div class="line">            	<span class="comment">//如果该子 View 不在触摸范围内，则略过</span></div><div class="line">            	<span class="keyword">if</span> (!canViewReceivePointerEvents(child) || !isTransformedTouchPointInView(x, y, child, <span class="keyword">null</span>)) &#123;</div><div class="line">                	<span class="keyword">continue</span>;</div><div class="line">                &#125;</div><div class="line">                <span class="comment">//如果子 View 的 dispatchTouchEvent 返回 true，</span></div><div class="line">                <span class="comment">//	则表示有子 View 处理了该事件，则设置 mFirstTouchTarget</span></div><div class="line">                <span class="comment">//如果子 View 的 dispatchTouchEvent 返回 false，</span></div><div class="line">                <span class="comment">//	则表示没有子 View 处理了该事件，则不设置 mFirstTouchTarget</span></div><div class="line">            	<span class="keyword">if</span> (dispatchTransformedTouchEvent(ev, <span class="keyword">false</span>, child, idBitsToAssign)) &#123;</div><div class="line">            		<span class="comment">//该方法中设置了 mFirstTouchTarget = child</span></div><div class="line">                    newTouchTarget = addTouchTarget(child, idBitsToAssign);	</div><div class="line">                    alreadyDispatchedToNewTouchTarget = <span class="keyword">true</span>;</div><div class="line">                    <span class="keyword">break</span>;</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// 4、判断是否有子 View 处理了事件</span></div><div class="line">    <span class="keyword">if</span> (mFirstTouchTarget == <span class="keyword">null</span>) &#123;</div><div class="line">        handled = dispatchTransformedTouchEvent(ev, canceled, <span class="keyword">null</span>, TouchTarget.ALL_POINTER_IDS);</div><div class="line">    &#125; </div><div class="line">    <span class="keyword">else</span> &#123;</div><div class="line">        <span class="keyword">if</span> (alreadyDispatchedToNewTouchTarget)&#123;</div><div class="line">    	     handled = <span class="keyword">true</span>;</div><div class="line">        &#125;</div><div class="line">    	<span class="keyword">else</span>&#123;</div><div class="line">        	<span class="keyword">if</span> (dispatchTransformedTouchEvent(ev, cancelChild, target.child, target.pointerIdBits)) &#123;</div><div class="line">            	handled = <span class="keyword">true</span>;</div><div class="line">            &#125;</div><div class="line">    	&#125;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">// 5、如果是一个事件序列的最后一个操作(ACTION_UP 或 ACTION_CANCEL)，则把状态清空</span></div><div class="line">	<span class="keyword">if</span> (canceled </div><div class="line">			|| actionMasked == MotionEvent.ACTION_UP</div><div class="line">            || actionMasked == MotionEvent.ACTION_HOVER_MOVE) &#123;</div><div class="line">    	resetTouchState();</div><div class="line">   	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>上面的代码中多处调用了 dispatchTransformedTouchEvent()，其中第三个参数有 null(第 52 行) 或者 child(第 40 行、第 59 行)。这个方法的实现如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">dispatchTransformedTouchEvent</span><span class="params">(MotionEvent event, <span class="keyword">boolean</span> cancel, View child, <span class="keyword">int</span> desiredPointerIdBits)</span></span>&#123;</div><div class="line">	<span class="keyword">boolean</span> handled = <span class="keyword">false</span>;</div><div class="line">	<span class="keyword">if</span> (child == <span class="keyword">null</span>) &#123;</div><div class="line">    	handled = <span class="keyword">super</span>.dispatchTouchEvent(event);</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">    	handled = child.dispatchTouchEvent(event);</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> handled;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>从上面代码可以看出，如果第三个参数传入 null，则调用 View 的 dispatchTouchEvent() 即自己处理事件；如果第三个参数传入 child，则将事件分发下去，即调用 child.dispatchTouchEvent()。</p>
+<p>解释：</p>
+<ul>
+<li>第 2 行: handled 变量作为 dispatchTouchEvent() 的返回值。</li>
+<li>第 4-7 行: 如果是 ACTION_DOWN 操作，则将其状态清空，包括 FLAG_DISALLOW_INTERCEPT。我们可以通过 requestDisallowInterceptTouchEvent() 将 FLAG_DISALLOW_INTERCEPT 设置为 true，表示该 ViewGroup 禁止拦截操作(即直接将 intercepted 设为 false，不调用 onInterceptTouchEvent())，但是这个设置对于 ACTION_DOWN 无效，因为第 4-7 行会将该状态清除，即使设置了该状态，ACTION_DOWN 操作还是会调用 onInterceptTouchEvent()。</li>
+<li>第 10-22 行: 每个 ViewGroup 都会带有 mFirstTouchTarget 变量，这个变量只有在 ACTION_DOWN 事件时才能设置，这个能从第 28 行的 if 语句看出来，因为设置 mFirstTouchTarget 是在第 40-45 行(只有第 28 行的 if 语句为 true 才能执行第 40-45 行代码)，可以看出如果有某个子 View 消费了该事件(这里不一定是直接子 View 消费了该事件，比如有 View 关系: v1-&gt;v2-&gt;v3，当前调用了 v1.dispatchTouchEvent()，如果 v3 消费了该事件，则表示 v1 的某个子 View 消费了该事件，并将 v1 的 mFirstTouchTarget 设置为 v2，将 v2 的 mFirstTouchTarget 设置为 v3)，这样才能使第 40 行的 dispatchTransformedTouchEvent() 返回 true，并设置 mFirstTouchTarget。</li>
+<li>第 25-48 行: 如果当前是 ACTION_DOWN 事件(第 28 行)并且没有拦截(第 27 行，onInterceptTouchEvent() 返回 false)，则会将 ACTION_DOWN 事件分发给合适的在触摸点的直接子 View，在第 40 行的 dispatchTransformedTouchEvent(ev, false, child, idBitsToAssign) 中会调用 child 的 dispatchTouchEvent()。如果 child.dispatchTouchEvent() 返回 false，表示 child 或 child 的子 View 没有人消费 ACTION_DOWN 事件，这样并不会给当前 ViewGroup 设置 mFirstTouchTarget。如果 child.dispatchTouchEvent() 返回 true，即表示 child 或 child 的子 View 有人消费 ACTION_DOWN 事件，则为当前 ViewGroup 设置 mFirstTouchTarget = child，并设置 alreadyDispatchedToNewTouchTarget = true，这个变量在后面会用到，表示是不是在这个方法中刚刚设置了 mFirstTouchTarget，因为只有 ACTION_DOWN 操作才能设置 mFirstTouchTarget，如果 <code>alreadyDispatchedToNewTouchTarget == true &amp;&amp; mFirstTouchTarget != null</code>，则表示当前是 ACTION_DOWN 事件并且在该方法中刚刚设置了 mFirstTouchTarget；如果<code>alreadyDispatchedToNewTouchTarget == false &amp;&amp; mFirstTouchTarget != null</code>，则表示 mFirstTouchTarget 并不是该方法中刚刚设置的，即当前不是 ACTION_DOWN 事件。</li>
+<li>第 51-53 行: 有两种情况会进入第 51 行的 if 语句，(1)当前是 ACTION_DOWN 操作，并且没有子 View 处理该事件 (2)当前不是 ACTION_DOWN 操作，并且在前面的 ACTION_DOWN 操作时没有子 View 处理该事件。第 52 行的第三个参数为 null，因此会执行 <code>super.dispatchTouchEvent()</code>，即执行 View 的 dispatchTouchEvent()，表示自己处理该事件。</li>
+<li>第 55-57 行: 因为只有当当前为 ACTION_DOWN 操作并且有子 View 处理了该事件时，alreadyDispatchedToNewTouchTarget 才为 true，这时直接将 handled 设为 true，不需要做额外的操作。</li>
+<li>第 59-61 行: 能够进入第 58 行的 else 语句意味着当前事件不是 ACTION_DOWN 并且在前面的 ACTION_DOWN 事件存在子 View 处理了该事件(即 mFirstTouchTarget != null，即在前面的 ACTION_DOWN 事件执行过第 40-46 行代码)。此时就执行 dispatchTransformedTouchEvent()，内部会调用 mFirstTouchTarget.dispatchTouchEvent()。</li>
+<li>第 66-69 行: 做收尾工作。</li>
+</ul>
+<h2 id="一些结论的验证"><a href="#一些结论的验证" class="headerlink" title="一些结论的验证"></a>一些结论的验证</h2><p>在网上有很多关于 Touch 事件的结论，这些结论其实都可以通过分析上面的代码得出。这里举几个例子：</p>
+<ul>
+<li>“某个 view 一旦开始处理事件，如果不消费 ACTION_DOWN 事件，则同一事件序列中的其他事件不会再交给它来处理”: 如果 view 处理但不消费 ACTION_DOWN 事件，则表示执行了第 40 行代码，但是返回 false(这个 view 作为 child 传入)，设这个 view 的父 view 为 v0，此时就没设置 v0 的 mFirstTouchTarget。因此接下来的事件(比如 ACTION_MOVE) 一旦分发到 v0，因为他的 mFirstTouchTarget == null，因此会执行第 52 行代码，即 v0 自己处理该事件。</li>
+<li>“某个 view 一旦决定拦截，那么这一事件序列都只能由它来处理，并且它的 onInterceptTouchEvent 不会被调用”: 因为 view 拦截了事件，因此第 27 行的 if 语句进不去，也就设置不了 view 的 mFirstTouchTarget，接下来的事件分发给 view 时，执行到第 11 行的 if 语句，因为该事件不是 ACTION_DOWN 并且 view 的 mFirstTouchTarget == null，因此 if 语句返回 false，即执行第 21 行设置 intercepted = true，因此不会调用 onInterceptTouchEvent；接着执行到第 51 行，因为 view 的 mFirstTouchTarget 为 null，因此执行第 52 行代码，即自己处理该事件。 </li>
+</ul>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="http://blog.csdn.net/guolin_blog/article/details/9097463" target="_blank" rel="external">Android事件分发机制完全解析，带你从源码的角度彻底理解(上)</a></li>
+<li><a href="http://hukai.me/android-deeper-touch-event-dispatch-process/" target="_blank" rel="external">Touch事件分发响应机制</a></li>
+<li><a href="http://blog.csdn.net/singwhatiwanna/article/details/17339857" target="_blank" rel="external">Android源码分析-点击事件派发机制</a></li>
+</ul>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2015/09/17/JNI和NDK入门/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2015/10/25/程序员简历制作建议/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>

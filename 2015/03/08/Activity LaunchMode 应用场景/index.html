@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>Activity LaunchMode 应用场景 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="Standard 就不说了，因为一般都是使用这种模式。 SingleTop 应用场景：网易新闻。 假设主界面为 MainActivity，显示新闻的界面是 DetailActivity，显然显示任何一条新闻都会使用 DetailActivity，即把新闻内容通过 Intent 传给 DetailActivity 就可以了。 假设你正在看新闻1(即在 DetailActivity)，此时手机收到服务">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Activity LaunchMode 应用场景">
+<meta property="og:url" content="http://xiazdong.github.io/2015/03/08/Activity LaunchMode 应用场景/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="Standard 就不说了，因为一般都是使用这种模式。 SingleTop 应用场景：网易新闻。 假设主界面为 MainActivity，显示新闻的界面是 DetailActivity，显然显示任何一条新闻都会使用 DetailActivity，即把新闻内容通过 Intent 传给 DetailActivity 就可以了。 假设你正在看新闻1(即在 DetailActivity)，此时手机收到服务">
+<meta property="og:updated_time" content="2017-05-17T14:34:21.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Activity LaunchMode 应用场景">
+<meta name="twitter:description" content="Standard 就不说了，因为一般都是使用这种模式。 SingleTop 应用场景：网易新闻。 假设主界面为 MainActivity，显示新闻的界面是 DetailActivity，显然显示任何一条新闻都会使用 DetailActivity，即把新闻内容通过 Intent 传给 DetailActivity 就可以了。 假设你正在看新闻1(即在 DetailActivity)，此时手机收到服务">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#SingleTop"><span class="toc-text">SingleTop</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SingleTask"><span class="toc-text">SingleTask</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#SingleInstance"><span class="toc-text">SingleInstance</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-Activity LaunchMode 应用场景" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">Activity LaunchMode 应用场景</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2015.03.08</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <p>Standard 就不说了，因为一般都是使用这种模式。</p>
+<h2 id="SingleTop"><a href="#SingleTop" class="headerlink" title="SingleTop"></a>SingleTop</h2><ul>
+<li>应用场景：网易新闻。</li>
+<li>假设主界面为 MainActivity，显示新闻的界面是 DetailActivity，显然显示任何一条新闻都会使用 DetailActivity，即把新闻内容通过 Intent 传给 DetailActivity 就可以了。</li>
+<li>假设你正在看新闻1(即在 DetailActivity)，此时手机收到服务器的推送：收到一条通知(新闻2)，点击通知就会跳转到 DetailActivity 并显示新闻2，当你点击通知时，因为目前栈顶的 Activity 就是 DetailActivity，因此这里就是使用 SingleTop 的地方，即点击通知后以 SingleTop 加载模式打开 DetailActivity 并显示新闻2，因此新闻1的 DetailActivity 就被覆盖掉了。</li>
+<li>此后你点击返回键会回到主界面。</li>
+</ul>
+<h2 id="SingleTask"><a href="#SingleTask" class="headerlink" title="SingleTask"></a>SingleTask</h2><ul>
+<li>应用场景：微信的主界面(一般应用主界面都会以 SingleTask 启动)。</li>
+<li>你打开微信主界面(在栈的最底部)后，进入朋友圈(在栈的顶部)，此时你点击 Home 键回桌面，并打开网易新闻。</li>
+<li>假设你想将网易新闻的一条新闻分享给微信好友，那么就按照 <code>分享</code>-&gt;<code>微信</code>-&gt;<code>好友A</code>-&gt;<code>分享给他</code>-&gt;<code>留在微信</code>。接着会跳转微信的主界面，即不是你原本所在的朋友圈，并且微信的栈只剩下一个元素：主界面的 Activity。这里就使用了 SingleTask(即以 SingleTask 加载模式打开微信主界面)。</li>
+</ul>
+<h2 id="SingleInstance"><a href="#SingleInstance" class="headerlink" title="SingleInstance"></a>SingleInstance</h2><ul>
+<li>应用场景：闹铃的响铃界面。</li>
+<li>你以前设置了一个闹铃：上午6点。在上午5点58分，你启动了闹铃设置界面，并按 Home 键回桌面；在上午5点59分时，你在微信和朋友聊天；在6点时，闹铃响了，并且弹出了一个对话框形式的 Activity(名为 AlarmAlertActivity) 提示你到6点了(这个 Activity 就是以 SingleInstance 加载模式打开的)，你按返回键，回到的是微信的聊天界面，这是因为 AlarmAlertActivity 所在的 Task 的栈只有他一个元素，因此退出之后这个 Task 的栈空了。如果是以 SingleTask 打开 AlarmAlertActivity，那么当闹铃响了的时候，按返回键应该进入闹铃设置界面。</li>
+</ul>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2014/12/31/虚拟机类加载机制/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2015/03/09/策略模式/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>

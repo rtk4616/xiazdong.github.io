@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>Android 性能优化：StrictMode | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="StrictModeAndroid 2.3 引入了 android.os.StrictMode（Android 3.0 中又在 StrictMode 中新加入了几个方法），为了能够帮助开发者检测 “主线程” 或 “虚拟机” 的一些影响性能或者不良的代码，为了能够让应用更平滑、响应更快。当然如果你已经足够了解 android 最佳实践，完全可以忽略这个类。注意：这个类只在开发时使用，发布时请去除。">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android 性能优化：StrictMode">
+<meta property="og:url" content="http://xiazdong.github.io/2014/09/07/Android 性能优化：StrictMode/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="StrictModeAndroid 2.3 引入了 android.os.StrictMode（Android 3.0 中又在 StrictMode 中新加入了几个方法），为了能够帮助开发者检测 “主线程” 或 “虚拟机” 的一些影响性能或者不良的代码，为了能够让应用更平滑、响应更快。当然如果你已经足够了解 android 最佳实践，完全可以忽略这个类。注意：这个类只在开发时使用，发布时请去除。">
+<meta property="og:updated_time" content="2017-05-17T14:28:17.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android 性能优化：StrictMode">
+<meta name="twitter:description" content="StrictModeAndroid 2.3 引入了 android.os.StrictMode（Android 3.0 中又在 StrictMode 中新加入了几个方法），为了能够帮助开发者检测 “主线程” 或 “虚拟机” 的一些影响性能或者不良的代码，为了能够让应用更平滑、响应更快。当然如果你已经足够了解 android 最佳实践，完全可以忽略这个类。注意：这个类只在开发时使用，发布时请去除。">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#StrictMode"><span class="toc-text">StrictMode</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#案例"><span class="toc-text">案例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-Android 性能优化：StrictMode" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">Android 性能优化：StrictMode</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2014.09.07</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="StrictMode"><a href="#StrictMode" class="headerlink" title="StrictMode"></a>StrictMode</h2><p>Android 2.3 引入了 <code>android.os.StrictMode</code>（Android 3.0 中又在 StrictMode 中新加入了几个方法），为了能够帮助开发者检测 “主线程” 或 “虚拟机” 的一些影响性能或者不良的代码，为了能够让应用更平滑、响应更快。当然如果你已经足够了解 android 最佳实践，完全可以忽略这个类。注意：这个类只在开发时使用，发布时请去除。</p>
+<blockquote>
+<p>目前 Android 4.0 以上的占有率为 84.3%，因此有很多应用直接 minSdk 设置为 14。因此一般不必考虑 StrictMode 中 API Level 的问题。</p>
+</blockquote>
+<p>StrictMode 共有两种策略(policy)：</p>
+<ul>
+<li>ThreadPolicy: 线程相关策略，包括主线程访问网络、磁盘(现在手机中使用闪存)读写、慢代码的检测。我们能够分别检测(detect)这些操作或允许(permit)这些操作。一旦出现了违规(violation)，就会有相应的提示（比如 Log 显示）。</li>
+<li>VMPolicy: 虚拟机相关的策略，包括 SQLite 或 SQLiteCursor 没关闭、实现 Closable 接口的类使用后没关闭 等。 </li>
+</ul>
+<p>当然也可以忽略某些违规，比如检测磁盘读写，因为一般来说在主线程中进行文件系统的读写是可以的。</p>
+<p>一旦我们在入口 Activity 的 <code>onCreate()</code> 的最前面添加 StrictMode 相关代码，则在整个程序中 StrictMode 都会有效。</p>
+<p>模版代码：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">	<span class="keyword">if</span> (DEVELOPER_MODE) &#123;</div><div class="line">        StrictMode.setThreadPolicy(<span class="keyword">new</span> StrictMode.ThreadPolicy.Builder()</div><div class="line">                    .detectAll()</div><div class="line">                    .penaltyLog()</div><div class="line">                    .build());</div><div class="line">        StrictMode.setVmPolicy(<span class="keyword">new</span> StrictMode.VmPolicy.Builder()</div><div class="line">                    .detectLeakedSqlLiteObjects()</div><div class="line">                    .detectLeakedClosableObjects()</div><div class="line">                    .penaltyLog()</div><div class="line">                    .penaltyDeath()</div><div class="line">                    .build());</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">super</span>.onCreate(savedInstanceState);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>当然，为了方便，可以直接使用 <code>StrictMode.enableDefaults()</code> 启用 StrictMode。</p>
+<p>其实 ThreadPolicy 和 VMPolicy 差不多，<code>detectAll()</code> 表示检测全部的违规，<code>penaltyLog()</code> 表示当违规时打印 Log。</p>
+<blockquote>
+<ul>
+<li>对于 ThreadPolicy 来说，我们可以使用 <code>detectNetwork()</code> 检测主线程网络访问，<code>detectDiskReads()</code> 和 <code>detectDiskWrites()</code> 检测主线程磁盘读写，<code>detectCustomSlowCalls()</code> 检测主线程自定义的慢代码。当然也可以使用 <code>permitXXX()</code> 允许这些操作。</li>
+<li>对于 VMPolicy 来说，<code>detectLeakedSqliteObjects()</code> 检测 SQLite 和 SQLiteCursor 内存泄漏(没关闭)，<code>detectLeakedClosableObjects()</code> 检测实现 Closable 接口的对象内存泄漏。</li>
+<li>我们能通过 <code>StrictMode.getThreadPolicy()</code> 和 <code>StrictMode.getVMPolicy()</code> 获得当前采取的 ThreadPolicy 和 VMPolicy。</li>
+</ul>
+</blockquote>
+<h2 id="案例"><a href="#案例" class="headerlink" title="案例"></a>案例</h2><p>场景：从网络上下载一张图片并且在 ImageView 中显示。</p>
+<p>核心代码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">ImageView imageView = (ImageView)findViewById(R.id.view);</div><div class="line">    URL url = <span class="keyword">null</span>;</div><div class="line">    Bitmap bmp = <span class="keyword">null</span>;</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">        url = <span class="keyword">new</span> URL(<span class="string">"http://www.tencent.com/1.jpg"</span>);</div><div class="line">        bmp = BitmapFactory.decodeStream(url.openConnection().getInputStream());</div><div class="line">    &#125;<span class="keyword">catch</span>(Exception e)&#123;</div><div class="line">        e.printStackTrace();</div><div class="line">    &#125;<span class="keyword">finally</span> &#123;</div><div class="line">        <span class="keyword">if</span>(bmp!=<span class="keyword">null</span>)&#123;</div><div class="line">            imageView.setImageBitmap(bmp);</div><div class="line">        &#125;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>这段代码一运行，StrictMode 就出现了一堆建议：</p>
+<p>1、 根据下面的 log 可以看出查找域名花费了 446 ms。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">D/StrictMode﹕ StrictMode policy violation; ~duration=446 ms: android.os.StrictMode$StrictModeNetworkViolation: policy=63 violation=4</div><div class="line">        at android.os.StrictMode$AndroidBlockGuardPolicy.onNetwork(StrictMode.java:1184)</div><div class="line">        at java.net.InetAddress.lookupHostByName(InetAddress.java:394)</div><div class="line">        ...</div><div class="line">        at libcore.net.http.HttpURLConnectionImpl.getInputStream(HttpURLConnectionImpl.java:168)</div><div class="line">        at info.xiazdong.performanceoptimization.MainActivity.onCreate(MainActivity.java:33)</div><div class="line">        ...</div></pre></td></tr></table></figure>
+<p>2、连接服务器花费 377 ms。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">D/StrictMode﹕ StrictMode policy violation; ~duration=377 ms: android.os.StrictMode$StrictModeNetworkViolation: policy=63 violation=4</div><div class="line">        at android.os.StrictMode$AndroidBlockGuardPolicy.onNetwork(StrictMode.java:1184)</div><div class="line">        at libcore.io.BlockGuardOs.connect(BlockGuardOs.java:84)</div><div class="line">        at libcore.io.IoBridge.connectErrno(IoBridge.java:127)</div><div class="line">        at libcore.io.IoBridge.connect(IoBridge.java:112)</div><div class="line">        ...</div><div class="line">        at libcore.net.http.HttpURLConnectionImpl.getInputStream(HttpURLConnectionImpl.java:168)</div><div class="line">        at info.xiazdong.performanceoptimization.MainActivity.onCreate(MainActivity.java:36)</div><div class="line">        ...</div></pre></td></tr></table></figure>
+<p>3、 解码图片花费了 205 ms。</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">D/StrictMode﹕ StrictMode policy violation; ~duration=205 ms: android.os.StrictMode$StrictModeNetworkViolation: policy=63 violation=4</div><div class="line">        at android.os.StrictMode$AndroidBlockGuardPolicy.onNetwork(StrictMode.java:1184)</div><div class="line">        at libcore.io.BlockGuardOs.recvfrom(BlockGuardOs.java:163)</div><div class="line">        at libcore.io.IoBridge.recvfrom(IoBridge.java:503)</div><div class="line">        at java.net.PlainSocketImpl.read(PlainSocketImpl.java:488)</div><div class="line">        ...</div><div class="line">        at android.graphics.BitmapFactory.decodeStream(BitmapFactory.java:791)</div><div class="line">        at info.xiazdong.performanceoptimization.MainActivity.onCreate(MainActivity.java:36)</div><div class="line">        ...</div></pre></td></tr></table></figure>
+<p>因此访问网络的操作都建议在子线程中进行，绝对不能在主线程进行。</p>
+<blockquote>
+<p>现在手机的像素越来越高，魅族4的相机像素达到 2070 万，拍出照片的尺寸是 5248 <em> 3936，如果这张照片是 ARGB_8888 类型的位图，则放在内存中将占据：2070 </em> 4 字节，约 78M，即使手机有足够内存放这张图片，在主线程解码(decode)也需要花费不少时间，因此一般这种耗时的操作都在子线程中进行，比如使用 AsyncTask（因为屏幕像素和相机像素差距比较大，因此一般都不会原图显示，因为手机上显示一张高清图片没有什么价值）</p>
+</blockquote>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="http://developer.android.com/reference/android/os/StrictMode.html" target="_blank" rel="external">Android Reference: StrictMode</a></li>
+<li><a href="http://hb.qq.com/a/20110914/000054.htm" target="_blank" rel="external">Android最佳实践之：StrictMode介绍</a></li>
+</ul>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="hide pull-left" href="/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2014/09/17/ su和sudo/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>Java8新特性之Lambda表达是入门 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="前言我看了了一些 Lambda 表达式的文章，发现有些文章讲的很好，比如：  如果想入门 Lambda 表达式，则可以首先看《Java核心技术》作者 Horstmann 写的 Lambda Expressions in Java 8，中文版请看这里JAVA 8：LAMBDA表达式（一）, JAVA 8：LAMBDA表达式（二） 和 JAVA 8：LAMBDA表达式（三） Java 8 Tutori">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Java8新特性之Lambda表达是入门">
+<meta property="og:url" content="http://xiazdong.github.io/2014/11/03/Lambda入门/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="前言我看了了一些 Lambda 表达式的文章，发现有些文章讲的很好，比如：  如果想入门 Lambda 表达式，则可以首先看《Java核心技术》作者 Horstmann 写的 Lambda Expressions in Java 8，中文版请看这里JAVA 8：LAMBDA表达式（一）, JAVA 8：LAMBDA表达式（二） 和 JAVA 8：LAMBDA表达式（三） Java 8 Tutori">
+<meta property="og:updated_time" content="2017-05-17T14:11:26.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Java8新特性之Lambda表达是入门">
+<meta name="twitter:description" content="前言我看了了一些 Lambda 表达式的文章，发现有些文章讲的很好，比如：  如果想入门 Lambda 表达式，则可以首先看《Java核心技术》作者 Horstmann 写的 Lambda Expressions in Java 8，中文版请看这里JAVA 8：LAMBDA表达式（一）, JAVA 8：LAMBDA表达式（二） 和 JAVA 8：LAMBDA表达式（三） Java 8 Tutori">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Functional-Interface"><span class="toc-text">Functional Interface</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#default-方法"><span class="toc-text">default 方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#static-方法"><span class="toc-text">static 方法</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Lambda-表达式初窥"><span class="toc-text">Lambda 表达式初窥</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#Lambda-表达式基本形式"><span class="toc-text">Lambda 表达式基本形式</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Target-Type"><span class="toc-text">Target Type</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Lambda-和使用匿名内部类实现的区别"><span class="toc-text">Lambda 和使用匿名内部类实现的区别</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Effectively-Final-变量"><span class="toc-text">Effectively Final 变量</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#Method-Reference"><span class="toc-text">Method Reference</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#例子"><span class="toc-text">例子</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-Lambda入门" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">Java8新特性之Lambda表达是入门</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2014.11.03</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>我看了了一些 Lambda 表达式的文章，发现有些文章讲的很好，比如：</p>
+<ul>
+<li>如果想入门 Lambda 表达式，则可以首先看《Java核心技术》作者 Horstmann 写的 <a href="http://www.drdobbs.com/jvm/lambda-expressions-in-java-8/240166764" target="_blank" rel="external">Lambda Expressions in Java 8</a>，中文版请看这里<a href="http://iofree.cc/java-8%EF%BC%9Alambda%E8%A1%A8%E8%BE%BE%E5%BC%8F%EF%BC%88%E4%B8%80%EF%BC%89/" target="_blank" rel="external">JAVA 8：LAMBDA表达式（一）</a>, <a href="http://iofree.cc/java-8%EF%BC%9Alambda%E8%A1%A8%E8%BE%BE%E5%BC%8F%EF%BC%88%E4%BA%8C%EF%BC%89/" target="_blank" rel="external">JAVA 8：LAMBDA表达式（二）</a> 和 <a href="http://iofree.cc/java-8%EF%BC%9Alambda%E8%A1%A8%E8%BE%BE%E5%BC%8F%EF%BC%88%E4%B8%89%EF%BC%89/" target="_blank" rel="external">JAVA 8：LAMBDA表达式（三）</a></li>
+<li><a href="http://winterbe.com/posts/2014/03/16/java-8-tutorial/" target="_blank" rel="external">Java 8 Tutorial</a> 也清晰地介绍了 Lambda 表达式</li>
+<li>如果想系统学习 Lambda 表达式，则可以看 <a href="http://cr.openjdk.java.net/~briangoetz/lambda/lambda-state-final.html" target="_blank" rel="external">State of the Lambda</a>(中文版请点<a href="http://zh.lucida.me/blog/java-8-lambdas-insideout-language-features/" target="_blank" rel="external">这里</a>)、<a href="http://cr.openjdk.java.net/~briangoetz/lambda/lambda-libraries-final.html" target="_blank" rel="external">State of the Lambda: Libraries Edition</a>、<a href="http://cr.openjdk.java.net/~briangoetz/lambda/lambda-translation.html" target="_blank" rel="external">Translation of Lambda Expressions</a></li>
+</ul>
+<p>我也不想重复造轮子，因此本篇文章的侧重点在于总结 Lambda 表达式的核心概念以及使用 Lambda 表达式的场景举例。</p>
+<h2 id="Functional-Interface"><a href="#Functional-Interface" class="headerlink" title="Functional Interface"></a>Functional Interface</h2><p>只包含一个方法的接口称为 Functional Interface（这里的<code>只包含一个方法</code> 不是只有一个方法，因为可能有 default 方法或 static 方法（这些后面会介绍），这里指的是只有一个普通抽象方法）。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">interface</span> <span class="title">A</span></span>&#123;</div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">f1</span><span class="params">()</span></span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="meta">@FunctionalInterface</span>       <span class="comment">//Compile Error，因为 B 有2个抽象方法</span></div><div class="line"><span class="class"><span class="keyword">interface</span> <span class="title">B</span> <span class="keyword">extends</span> <span class="title">A</span></span>&#123;</div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">f2</span><span class="params">()</span></span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>比如 Comparator 接口：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="meta">@FunctionalInterface</span></div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">Comparator</span>&lt;<span class="title">T</span>&gt; </span>&#123;</div><div class="line">	<span class="function"><span class="keyword">int</span> <span class="title">compare</span><span class="params">(T o1, T o2)</span></span>;</div><div class="line">	<span class="function"><span class="keyword">boolean</span> <span class="title">equals</span><span class="params">(Object obj)</span></span>;</div><div class="line">	<span class="function"><span class="keyword">default</span> Comparator&lt;T&gt; <span class="title">reversed</span><span class="params">()</span> </span>&#123;</div><div class="line"> 		…</div><div class="line"> 	&#125;</div><div class="line">	<span class="keyword">public</span> <span class="keyword">static</span> &lt;T, U extends Comparable&lt;? <span class="keyword">super</span> U&gt;&gt; <span class="function">Comparator&lt;T&gt; <span class="title">comparing</span><span class="params">(</span></span></div><div class="line">            									Function&lt;? <span class="keyword">super</span> T, ? extends U&gt; keyExtractor)</div><div class="line">	&#123;</div><div class="line">		…</div><div class="line">   	&#125;</div><div class="line">		…</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>解释：</p>
+<ul>
+<li><code>@FunctionalInterface</code> : 此注解只是为了表明 Comparator 接口是一个 Functional Interface(不加也没关系)，当创建的接口违反了要成为 Functional Interface 的规则，则会编译错误，因此这个注解只是为了验证代码的正确性而已。因此如果你以后自己定义了一个 Functional Interface，建议在最开头写上注解 <code>@FunctionalInterface</code>。</li>
+<li>Comparator 接口只新定义了一个普通抽象方法，就是 <code>int compare(T o1, T o2);</code> 其他方法要么是 <code>default</code> 或 <code>static</code> 方法（我们发现 Comparator 接口既有 default 方法，又有 static 方法，这些后面会介绍，这是 Java8 对于接口的新特性），要么是把继承自 Object 类的方法重写了一下(<code>equals</code> 方法)</li>
+<li><code>Function&lt;? super T, ? extends U&gt;</code> : Function 接口是 Java8 新增的 Functional Interface 之一(<code>java.util.function</code> 包中包含了很多内置的 Functional Interface)，<code>Function&lt;T,R&gt;</code> 提供了 <code>R apply(T t)</code> 函数，即给定一个输入t，经过一系列转换返回一个R实例(可以想象成一个名为 <code>apply</code> 的盒子，输入是T类型的实例，输出是R类型的实例，具体盒子的实现可以自定义)。</li>
+<li><code>comparing</code> 函数中加了泛型。其中 <code>&lt;? super T, ? extends U&gt;</code> 表示 Function<a,b> 中的 A 必须要是 T 的父类，B 必须是 U 的子类。</a,b></li>
+</ul>
+<h2 id="default-方法"><a href="#default-方法" class="headerlink" title="default 方法"></a>default 方法</h2><p>default 方法的出现是为了降低未来对于已有接口修改的难度，即如果想对一个已有接口新加一个或多个方法，因为以前不允许在接口中加入函数实现，因此你首先必须要在接口中定义一些抽象方法，并且在实现该接口的所有类中都实现新加的方法，很麻烦对不对（比如世界上有千千万万 Java 程序员使用了 Comparator 接口，如果新版本 JDK 在 Comparator 中新定义了一个抽象方法，那是毁灭性的！千千万万的程序员就要崩溃了，估计用 Java 的人也会大大减少…）；default 帮你解决这个问题，你如果想在接口中新加方法，并且不想影响实现该接口的类，只需要将他声明为 default 并实现他即可，当然实现该接口的类也可以 Overwrite 该 default 方法，当然也可以什么都不做(就像 Comparator 接口中也新加了很多 default 方法，你完全不需要改动写过的现有代码)’</p>
+<p>这里举个例子说明 default 在 JDK 中的应用：</p>
+<ul>
+<li>List 接口中新增了 sort 方法，自从有了这个方法，就不需要调用 <code>Arrays.sort()</code> 方法了。对 ArrayList 类型的实例 list 排序，只调用 <code>list.sort()</code>  即可。</li>
+<li>Iterable 接口中新增了 <code>forEach</code> 方法，我们可以直接使用 <code>list.forEach()</code> 对每个元素做一些操作，不必再自己 for 循环了。</li>
+</ul>
+<h2 id="static-方法"><a href="#static-方法" class="headerlink" title="static 方法"></a>static 方法</h2><p>Java8 开始在接口中能够声明静态方法，这里举个例子说明 static 方法出现的原因：想在接口中定义一些辅助方法，比如原本创建一个实现 Comparator 接口的对象需要 new，现在只需要 <code>Comparator.comparing()</code> 方法就可以创建这样一个对象，很方便。 </p>
+<h2 id="Lambda-表达式初窥"><a href="#Lambda-表达式初窥" class="headerlink" title="Lambda 表达式初窥"></a>Lambda 表达式初窥</h2><h3 id="Lambda-表达式基本形式"><a href="#Lambda-表达式基本形式" class="headerlink" title="Lambda 表达式基本形式"></a>Lambda 表达式基本形式</h3><p>Lambda 表达式以 <code>(ParamList) -&gt; { 函数体 }</code> 或 <code>(ParamList) -&gt; 单个表达式</code>形式存在。前者等价于创建一个实现某个 Functional Interface 的对象，并实现该接口的方法，<code>(ParamList)</code> 必须和 Functional Interface 需要实现的方法的参数一一对应，<code>{ 函数体 }</code> 就是实现方法的函数体。当接口方法的函数体中代码很简单，只需要一个 return 语句就可以搞定时，使用 Lambda 表达式的后者表现形式更简洁，<code>单个表达式</code> 就是 return 语句，只是少了 return 这个单词。</p>
+<blockquote>
+<p>当 <code>(ParamList)</code> 中只有一个参数时，<code>()</code> 可省略，即 <code>(Param)</code> 等价于 <code>Param</code> </p>
+</blockquote>
+<p><strong>例子：</strong></p>
+<p>为了创建一个用于整数之间比较的 Comparator 对象，需要以下6行代码：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Comparator&lt;Integer&gt; c = <span class="keyword">new</span> Comparator&lt;Integer&gt;() &#123;</div><div class="line">   <span class="meta">@Override</span></div><div class="line">   <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(Integer o1, Integer o2)</span> </span>&#123;</div><div class="line">       <span class="keyword">return</span> o1.compareTo(o2);</div><div class="line">   &#125;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>实际上用 Lambda 表达式1行解决：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Comparator&lt;Integer&gt; c = (Integer o1, Integer o2) -&gt; o1.compareTo(o2);</div></pre></td></tr></table></figure>
+<p>Lambda 表达式是一个匿名方法，为了解决实现 Functional Interface 的匿名内部类太过麻烦的问题（本来1行代码能解决的问题用了6行）</p>
+<h3 id="Target-Type"><a href="#Target-Type" class="headerlink" title="Target Type"></a>Target Type</h3><p>Lambda 表达式有一个 Target Type 的概念，意思是这个 Lambda 表达式将返回的类型。同一个 Lambda 表达式在不同的上下文中的 Target Type 是不一样的（Target Type 是通过类型推导得出），比如：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Callable&lt;String&gt; c = () -&gt; “done”;</div></pre></td></tr></table></figure>
+<p>和</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">PrivilegedAction&lt;String&gt; a = () -&gt; “done”;</div></pre></td></tr></table></figure>
+<p>虽然 Lambda 表达式一样，但是前者的 Target Type 是 Callable，后者的 Target Type 是 PrivilegedAction。</p>
+<p>我们也能够通过强制类型转换的方式帮助编译器确定 Target Type：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Object o = (Runnable) () -&gt; &#123; System.out.println(<span class="string">"hello"</span>)&#125;;</div></pre></td></tr></table></figure>
+<h3 id="Lambda-和使用匿名内部类实现的区别"><a href="#Lambda-和使用匿名内部类实现的区别" class="headerlink" title="Lambda 和使用匿名内部类实现的区别"></a>Lambda 和使用匿名内部类实现的区别</h3><p>在 Lambda 表达式中使用 this 关键字表示的意思是外部类，而内部类中使用 this 关键字表示的意思是内部类。Lambda 表达式虽然看上去像内部类，但是本身并不依赖外部类，是独立存在的（内部类的生存依赖于外部类，从内部类的命名本身就能看出）</p>
+<p>比如：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Hello</span> </span>&#123;</div><div class="line">	Runnable r1 = () -&gt; &#123; System.out.println(<span class="keyword">this</span>); &#125;</div><div class="line">	Runnable r2 = () -&gt; &#123; System.out.println(toString()); &#125;</div><div class="line">    Runnable r3 = <span class="keyword">new</span> Runnable()[</div><div class="line">		<span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span></span>&#123;</div><div class="line">			System.out.println(<span class="keyword">this</span>);</div><div class="line">			System.out.println(toString());</div><div class="line">	    &#125;</div><div class="line">    &#125;</div><div class="line">	</div><div class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">toString</span><span class="params">()</span> </span>&#123;  <span class="keyword">return</span> <span class="string">"Hello"</span>; &#125;</div><div class="line">	<span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String... args)</span> </span>&#123;</div><div class="line">		<span class="keyword">new</span> Hello().r1.run();</div><div class="line">		<span class="keyword">new</span> Hello().r2.run();</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>r1 和 r2 都是输出 <code>“Hello”</code>，r3 输出 <code>Hello$1@5b89a773</code>。可以看出 Lambda 表达式和一般匿名内部类有区别。</p>
+<p>接下去再举一个例子：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">int</span> a = <span class="number">1</span>;</div><div class="line">        </div><div class="line">Runnable r1 = <span class="keyword">new</span> Runnable() &#123;</div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> a = <span class="number">2</span>;      <span class="comment">//OK     </span></div><div class="line">    &#125;</div><div class="line">&#125;;</div><div class="line">        </div><div class="line">Runnable r2 = () -&gt; &#123;</div><div class="line">   <span class="keyword">int</span> a = <span class="number">2</span>;    <span class="comment">//Compile Error</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>可以看出 Lambda 表达式的 block statement 的 scope 和外部类是一个 Level 的，而内部类不是。</p>
+<p>Java 是 Lexical Scoping 的，程序语言可能有两种 scoping 方式：Lexical Scoping 和 dynamic Scoping。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">f()&#123;</div><div class="line">	g();</div><div class="line">&#125;</div><div class="line">	</div><div class="line">g()&#123;</div><div class="line">	<span class="keyword">int</span> a;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在上面的代码中，如果语言是 lexical scoping 的，则<code>f()</code>函数中不能访问<code>g()</code>的局部变量<code>a</code>，如果是 dynamic scoping 的，则<code>f()</code>函数能够访问<code>g()</code>的局部变量<code>a</code>。</p>
+<h3 id="Effectively-Final-变量"><a href="#Effectively-Final-变量" class="headerlink" title="Effectively Final 变量"></a>Effectively Final 变量</h3><p>原本如果内部类要使用外部的变量，则外部变量一定要定义成 final 的，Java8 以后，如果 Lambda 表达式和内部类要使用外部的变量，则不需要一定定义成 final 的，只需要是 “Effectively final” 即可，意思是你虽然不定义成 final，但是你实际上是 final 的，即使你加了个 final 也不会编译错误。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">int</span> b = <span class="number">1</span>;</div><div class="line"></div><div class="line">Runnable r3 = () -&gt; &#123;</div><div class="line">    System.out.println(b);  <span class="comment">//OK</span></div><div class="line">&#125;;</div><div class="line"></div><div class="line">Runnable r4 = <span class="keyword">new</span> Runnable()&#123;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span></span>&#123;</div><div class="line">        System.out.println(b);  <span class="comment">//OK</span></div><div class="line">    &#125;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>和原来的 final 变量一样，如果要向 <code>final ArrayList arr</code> 的 arr 变量中加入几个元素，这是允许的，但是要改变 arr 的引用，这是不允许的。</p>
+<h3 id="Method-Reference"><a href="#Method-Reference" class="headerlink" title="Method Reference"></a>Method Reference</h3><p>这是 Lambda 表达式的特殊情况，当接口实现方法的函数体中只包含 return 语句，并且 return 语句只是调用了其他方法，没有其他额外的代码，则这时候我们”可能”可以更加简化语法。</p>
+<p>Method Reference 的语法有很多种，因为方法有静态方法、常规方法、构造方法、父类的常规方法等，对于不同的方法，Method Reference 的语法也是不同的。</p>
+<ul>
+<li>静态方法：<em>ClassName</em>::<em>MethodName</em></li>
+<li>实例上的一般方法：<em>instance</em> :: <em>MethodName</em></li>
+<li>超类上的方法：super::<em>MethodName</em></li>
+<li>任意对象的一般方法：<em>ClassName</em>::<em>MethodName</em></li>
+<li>类的构造函数：<em>ClassName</em>::new</li>
+<li>数组构造函数：<em>TypeName</em>[]::new</li>
+</ul>
+<p>比如</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Comparator&lt;Integer&gt; c = (Integer o1, Integer o2) -&gt; o1.compareTo(o2);</div></pre></td></tr></table></figure>
+<p>等价于 </p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">Comparator&lt;Integer&gt; c = Integer::compareTo;</div></pre></td></tr></table></figure>
+<p>我们能够看到上面的 Method Reference 方式(这里是任意对象的一般方法)比 Lambda 表达式更简单（虽然不那么容易理解），那么问题来了，compareTo 怎么连参数都没有指定，那怎么确定啊？其实 Method Reference 有个规则：</p>
+<blockquote>
+<p>functional interface 的方法的参数一一按顺序对应于 Method Rerference 的方法参数。</p>
+</blockquote>
+<p>因此 <code>Integer::compareTo</code> 等价于 <code>o1.compareTo(o2)</code>。</p>
+<blockquote>
+<p>个人观点：Method Reference 语法比较晦涩，而且给别人看也不太好理解，所以我觉得用 Lambda 表达式也挺好…是不是太没追求了…</p>
+</blockquote>
+<h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><p>这里就以一个例子讲解下 Lambda 表达式。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">Person</span></span>&#123;</div><div class="line">	String name;</div><div class="line">    <span class="keyword">int</span> age;</div><div class="line">    <span class="function"><span class="keyword">public</span> String <span class="title">getName</span><span class="params">()</span></span>&#123;</div><div class="line">        <span class="keyword">return</span> name;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">//1. 最普通的方法</span></div><div class="line">Comparator&lt;Person&gt; c1 = <span class="keyword">new</span> Comparator&lt;Person&gt;() &#123;</div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">compare</span><span class="params">(Person o1, Person o2)</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> o1.name.compareTo(o2.name);</div><div class="line">    &#125;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="comment">//2. Lambda 表达式方法</span></div><div class="line">Comparator&lt;Person&gt; c2 = (Person o1, Person o2) -&gt; o1.name.compareTo(o2.name);</div><div class="line"></div><div class="line"><span class="comment">//3. 应用类型推导</span></div><div class="line">Comparator&lt;Person&gt; c3 = (o1, o2) -&gt; o1.name.compareTo(o2.name);</div><div class="line"></div><div class="line"><span class="comment">//4. 使用Comparator 的静态方法</span></div><div class="line">Comparator&lt;Person&gt; c4 = Comparator.comparing((p) -&gt; p.name);</div><div class="line"><span class="comment">//也可以写成: Comparator&lt;Person&gt; c4 = Comparator.comparing(p -&gt; p.name);</span></div><div class="line"></div><div class="line"><span class="comment">//5. 使用Method Reference</span></div><div class="line">Comparator&lt;Person&gt; c5 = Comparator.comparing(Person::getName);</div></pre></td></tr></table></figure>
+<p>上面给了5种方法创建一个 Comparator 对象，目的是对多个 Person 排序，比较的 key 是 name 属性。</p>
+<ul>
+<li>第一种方法是 Java8 以前的方法。</li>
+<li>第二种方法是使用 Lambda 表达式，<code>(Person o1, Person o2)</code> 表示实现方法的参数；<code>o1.name.compareTo(o2.name)</code> 等价于 <code>return o1.name.compareTo(o2.name)</code>；</li>
+<li>第三种编译通过的原因是因为根据类型推导，编译器能够知道 Lambda 表达式的类型是 Comparator\<person\>，因此方法参数 Person 不写，编译器也知道。</person\></li>
+<li>第四种方法使用了 Java8 中 Comparator 接口新加的 static 方法 <code>comparing</code>，参数接收一个 <code>Function&lt;T,R&gt;</code> 对象，根据 <code>Comparator&lt;Person&gt;</code> 得知 <code>T</code> 就是 <code>Person</code>，根据 <code>p.name</code> 得知 <code>R</code> 就是 <code>String</code></li>
+<li>第五种方法使用了 Method Reference</li>
+</ul>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2014/10/03/Picasso使用入门/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2014/11/27/代理模式及Java实现动态代理/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>
