@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>Android性能优化：图片保存，还能更快 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="前言本文主要介绍带Exif信息的JPEG图片的保存优化。原来在这种情况下，整个过程分为两步：  首先调用Bitmap的compress()保存图片数据。 然后通过ExifInterface类设置需要保存的Exif信息。  是否能通过一步直接完成Exif信息和Bitmap数据的写入呢？答案是能。 本文首先介绍了JPEG文件结构，通过对该结构的剖析，可以看出一次写入Exif信息和Bitmap数据是完全">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android性能优化：图片保存，还能更快">
+<meta property="og:url" content="http://xiazdong.github.io/2017/03/28/Android性能优化：图片保存，还能更快/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="前言本文主要介绍带Exif信息的JPEG图片的保存优化。原来在这种情况下，整个过程分为两步：  首先调用Bitmap的compress()保存图片数据。 然后通过ExifInterface类设置需要保存的Exif信息。  是否能通过一步直接完成Exif信息和Bitmap数据的写入呢？答案是能。 本文首先介绍了JPEG文件结构，通过对该结构的剖析，可以看出一次写入Exif信息和Bitmap数据是完全">
+<meta property="og:image" content="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/exif.png">
+<meta property="og:image" content="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/camera_exif.png">
+<meta property="og:updated_time" content="2017-05-17T13:56:24.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android性能优化：图片保存，还能更快">
+<meta name="twitter:description" content="前言本文主要介绍带Exif信息的JPEG图片的保存优化。原来在这种情况下，整个过程分为两步：  首先调用Bitmap的compress()保存图片数据。 然后通过ExifInterface类设置需要保存的Exif信息。  是否能通过一步直接完成Exif信息和Bitmap数据的写入呢？答案是能。 本文首先介绍了JPEG文件结构，通过对该结构的剖析，可以看出一次写入Exif信息和Bitmap数据是完全">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/exif.png">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/category/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#JPEG文件结构"><span class="toc-text">JPEG文件结构</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#ExifOutputStream"><span class="toc-text">ExifOutputStream</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-Android性能优化：图片保存，还能更快" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">Android性能优化：图片保存，还能更快</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2017.03.28</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>本文主要介绍带Exif信息的JPEG图片的保存优化。原来在这种情况下，整个过程分为两步：</p>
+<ul>
+<li>首先调用Bitmap的<code>compress()</code>保存图片数据。</li>
+<li>然后通过ExifInterface类设置需要保存的Exif信息。</li>
+</ul>
+<p>是否能通过一步直接完成Exif信息和Bitmap数据的写入呢？答案是能。</p>
+<p>本文首先介绍了JPEG文件结构，通过对该结构的剖析，可以看出一次写入Exif信息和Bitmap数据是完全可能的。其次介绍了ExifInterface的使用方法。最后介绍了JPEG保存优化的核心类ExifOutputStream。</p>
+<h2 id="JPEG文件结构"><a href="#JPEG文件结构" class="headerlink" title="JPEG文件结构"></a>JPEG文件结构</h2><p>基本概念：</p>
+<ul>
+<li>JPEG（Joint Photographic Experts Group，一种针对图像的有损压缩方法）：描述一个图像如何转换为字节流。</li>
+<li>JFIF（JPEG File Interchange Format，JPEG文件交换格式）：描述一个JPEG字节流如何转换为电脑上存储的文件。</li>
+<li>EXIF（Exchangeable image file format，可交换图像文件格式）：可以记录照片的属性信息和拍摄信息。Exif信息是附加在JPEG文件头中的，以0xFFE1为开头，后面两个字节表示Exif信息的长度。</li>
+</ul>
+<p>为了更加简单的说明JPEG文件的结构，我们拿带有EXIF信息的最简单的图片作为例子，一共8张图，如下图所示：</p>
+<p><img src="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/exif.png" alt=""></p>
+<p>第一张图是正常的F，后面7张都是对F进行了翻转或旋转，这些图片只有Exif中的Orientation值不一样，其余数据完全一样，因此这里我们就拿第八张图分析，我们通过iHex应用查看了该图片的16进制串，如下：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">FFD8FFE0 00104A46 49460001 010100DC 00DC0000 FFE10022 45786966 00004949 2A000800 00000100 12010300 01000000 08000000 00000000 FFDB0043 00060504 04050606 0506060A 08060707 0A09090A 0A101417 100C0F0E 141D1A16 16141718 18161C23 1B1A1F25 2623202C 20161929 2A29272D 302D1F25 30282928 28FFC000 0B080030 00500101 1100FFC4 001F0000 01050101 01010101 00000000 00000000 01020304 05060708 090A0BFF C400B510 00020103 03020403 05050404 0000017D 01020300 04110512 21314106 13516107 22711432 8191A108 2342B1C1 1552D1F0 24336272 82090A16 1718191A 25262728 292A3435 36373839 3A434445 46474849 4A535455 56575859 5A636465 66676869 6A737475 76777879 7A838485 86878889 8A929394 95969798 999AA2A3 A4A5A6A7 A8A9AAB2 B3B4B5B6 B7B8B9BA C2C3C4C5 C6C7C8C9 CAD2D3D4 D5D6D7D8 D9DAE1E2 E3E4E5E6 E7E8E9EA F1F2F3F4 F5F6F7F8 F9FAFFDA 00080101 00003F00 F9528A28 A28A28A2 8A28A28A 28A28A28 AFD54A28 A2BF2AE8 AFD54A2B F2AE8AFD 54A28A2B F2AE8AFD 54A2BF2A E8AFD54A 28A28A28 A2BF2AE8 AFD54A28 A28A28A2 BF2AE8AF FFD9</div></pre></td></tr></table></figure>
+<p>是不是一头雾水？首先我们给出几个概念：</p>
+<ul>
+<li>Exif信息以0xFFE1开头，后面的2个字节是Exif信息的长度，该长度为这2个字节和后面Exif信息的长度和。</li>
+<li>Exif每个Tag的结构为AAAA BBBB CCCCCCCC DDDDDDDD，其中AAAA为Tag Name，DDDDDDDD为Tag Value，BBBB为Tag Value的数据类型，CCCCCCCC为Tag Value的个数。</li>
+</ul>
+<p>这里将该串进行了拆解，并一一进行分析：</p>
+<table>
+<thead>
+<tr>
+<th>十六进制串</th>
+<th>解释</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>FFD8</td>
+<td>SOI(Start Of Image)，JPEG的文件头。</td>
+</tr>
+<tr>
+<td>FFE0</td>
+<td>数码相机信息的标记头，即以下信息是数码配置信息。</td>
+</tr>
+<tr>
+<td>0010</td>
+<td>长度信息+真实数据的总长度为16字节，即真实数据的长度为14字节。</td>
+</tr>
+<tr>
+<td>4A46 49460001 010100DC 00DC0000</td>
+<td>数码相机配置信息。</td>
+</tr>
+<tr>
+<td>FFE1</td>
+<td>Exif 标记，表示Exif信息的开始。</td>
+</tr>
+<tr>
+<td>0022</td>
+<td>值为34，即Exif的数据+长度信息的长度为34字节，表示下面的Exif数据长度为32字节。</td>
+</tr>
+<tr>
+<td>45786966 0000</td>
+<td>Exif的ASCII字符串。</td>
+</tr>
+<tr>
+<td>4949</td>
+<td>Exif的数据是按大端（motorola byte align）还是小端（Intel byte align），4949表示小端，4d4d表示大端。</td>
+</tr>
+<tr>
+<td>2A00</td>
+<td>值为002A，常量。因为是小端，所以是2A00。</td>
+</tr>
+<tr>
+<td>0800 0000</td>
+<td>值为00000008，常量，表示第一个exif tag距离4949的偏移量。</td>
+</tr>
+<tr>
+<td>0100</td>
+<td>值为0001，表示后面有一个tag。</td>
+</tr>
+<tr>
+<td>1201</td>
+<td>值为0112，表示tag name为orientation。</td>
+</tr>
+<tr>
+<td>0300</td>
+<td>值为0003，表示类型为unsigned short，即orientation的值占2个字节。</td>
+</tr>
+<tr>
+<td>01000000</td>
+<td>orientation对应的值的个数，这里是1个。</td>
+</tr>
+<tr>
+<td>08000000 00000000</td>
+<td>值为00000000 00000008，具体的含义在下文中解释。</td>
+</tr>
+<tr>
+<td>…</td>
+<td>图片数据。</td>
+</tr>
+<tr>
+<td>FFD9</td>
+<td>EOI(End Of Image)，JPEG的文件尾。</td>
+</tr>
+</tbody>
+</table>
+<p>其中，需要进一步解释的是ORIENTATION，值可以从1－8，每个值对应的是图片的不同偏转，如下图所示：</p>
+<p>在Android相机拍照中，一般只需要处理其中4种情况，分别是：</p>
+<ul>
+<li>1：正常角度，对应ExifInterface.ORIENTATION_NORMAL。</li>
+<li>3：偏转180度，需要偏转180度去纠正，对应ExifInterface.ORIENTATION_ROTATE_180。</li>
+<li>6：偏转270度，需要偏转90度去纠正，对应ExifInterface.ORIENTATION_ROTATE_90。</li>
+<li>8：偏转90度，需要偏转270度去纠正，对应ExifInterface.ORIENTATION_ROTATE_270。</li>
+</ul>
+<p>如下图所示：</p>
+<p><img src="https://raw.githubusercontent.com/xiazdong/BlurDemo/master/images/camera_exif.png" alt=""></p>
+<p>在Android Studio中能够看到没纠正过角度的图片，Mac的预览图片看到的是自动纠正过角度的图片。</p>
+<p>一般来说，我们可以通过switch语句对每个orientation的值进行不同的纠正，但是 <a href="http://magnushoff.com/jpeg-orientation.html" target="_blank" rel="external">JPEG Orientation</a> 给出了一个通用的纠正算法，思想为：</p>
+<figure class="highlight plain"><table><tr><td class="code"><pre><div class="line">value = value - 1;</div><div class="line">if (value &amp; 100b != 0) 图片对角线翻转</div><div class="line">if (value &amp; 010b != 0) 图片旋转180度</div><div class="line">if (value &amp; 001b != 0) 图片水平翻转</div></pre></td></tr></table></figure>
+<p>具体实现如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Bitmap <span class="title">fixOrientation</span><span class="params">(String file)</span> </span>&#123;</div><div class="line">    Matrix matrix = <span class="keyword">new</span> Matrix();</div><div class="line">    Bitmap bitmap = BitmapFactory.decodeFile(file);</div><div class="line">    <span class="keyword">try</span> &#123;</div><div class="line">        ExifInterface exif = <span class="keyword">new</span> ExifInterface(file);</div><div class="line">        <span class="keyword">int</span> value = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_UNDEFINED);</div><div class="line">        <span class="keyword">if</span> (value &gt; <span class="number">0</span>) &#123;</div><div class="line">            value --;</div><div class="line">            <span class="keyword">if</span> ((value &amp; <span class="number">0b100</span>) != <span class="number">0</span>) &#123; <span class="comment">//对角线翻转</span></div><div class="line">                matrix.postScale(-<span class="number">1.0f</span>, <span class="number">1.0f</span>);</div><div class="line">                matrix.postRotate(-<span class="number">90</span>);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">if</span> ((value &amp; <span class="number">0b010</span>) != <span class="number">0</span>) &#123; <span class="comment">//旋转180度</span></div><div class="line">                matrix.postRotate(<span class="number">180</span>);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">if</span> ((value &amp; <span class="number">0b001</span>) != <span class="number">0</span>) &#123; <span class="comment">//水平翻转</span></div><div class="line">                matrix.postScale(-<span class="number">1.0f</span>, <span class="number">1.0f</span>);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">return</span> Bitmap.createBitmap(bitmap, <span class="number">0</span>, <span class="number">0</span>, bitmap.getWidth(), bitmap.getHeight(), matrix, <span class="keyword">true</span>);</div><div class="line">        &#125;</div><div class="line">    &#125; <span class="keyword">catch</span> (IOException e) &#123;</div><div class="line">        e.printStackTrace();</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">return</span> bitmap;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里用到了ExifInterface类，该类是系统提供的操作Exif信息的核心类，使用方法是：</p>
+<figure class="highlight"><table><tr><td class="code"><pre><div class="line">ExifInterface exif = new ExifInterface(PATH);</div><div class="line">int orientation = exif.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);</div><div class="line">exif.setAttribute(ExifInterface.TAG_ORIENTATION, "1”); //设置ORIENTATION</div><div class="line">exif.saveAttributes(); //保存Exif信息</div></pre></td></tr></table></figure>
+<p>这里需要注意一点：saveAttributes()这个方法很耗时，需要将原文件的数据拷贝到另一个文件，并删除原文件，然后重命名新文件，因此建议在调用该方法之前把该设置的Exif信息全通过setAttribute()设置完，使得saveAttributes()只调用一次。</p>
+<blockquote>
+<p>Android 7.1中新增了ExifInterface Support Library，但是很奇怪，我使用该类获取orientation，始终获取不到，而用android.media.ExifInterface类却没问题。</p>
+</blockquote>
+<h2 id="ExifOutputStream"><a href="#ExifOutputStream" class="headerlink" title="ExifOutputStream"></a>ExifOutputStream</h2><p><a href="http://www.imaotao.cn/xref/webrtc-201604/chromium/src/third_party/android_tools/sdk/sources/android-23/com/android/gallery3d/exif/ExifOutputStream.java" target="_blank" rel="external">ExifOutputStream</a>是系统内部不public的类，位于”com.android.gallery3d.exif”包中，它提供了一次写入Exif信息和JPEG数据的方式。我们可以通过<code>writeExif()</code>实现一次IO写入JPEG和Exif信息。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">writeExif</span><span class="params">(<span class="keyword">byte</span>[] jpeg, ExifData exif, String path)</span> </span>&#123;</div><div class="line">	OutputStream os = <span class="keyword">null</span>;</div><div class="line">	<span class="keyword">try</span> &#123;</div><div class="line">		os = <span class="keyword">new</span> FileOutputStream(path);</div><div class="line">		ExifOutputStream eos = <span class="keyword">new</span> ExifOutputStream(os);</div><div class="line">		<span class="comment">// Set the exif header</span></div><div class="line">		eos.setExifData(exif);</div><div class="line">		<span class="comment">// Write the original jpeg out, the header will be add into the file.</span></div><div class="line">		eos.write(jpeg);</div><div class="line">	&#125; <span class="keyword">catch</span> (FileNotFoundException e) &#123;</div><div class="line">		e.printStackTrace();</div><div class="line">	&#125; <span class="keyword">catch</span> (IOException e) &#123;</div><div class="line">		e.printStackTrace();</div><div class="line">	&#125; <span class="keyword">finally</span> &#123;</div><div class="line">		<span class="keyword">if</span> (os != <span class="keyword">null</span>) &#123;</div><div class="line">			<span class="keyword">try</span> &#123;</div><div class="line">				os.close();</div><div class="line">			&#125; <span class="keyword">catch</span> (IOException e) &#123;</div><div class="line">				e.printStackTrace();</div><div class="line">			&#125;</div><div class="line">		&#125;</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>根据统计，相比原来的实现，速度提升了10%。</p>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li><a href="https://www.media.mit.edu/pia/Research/deepview/exif.html" target="_blank" rel="external">Exif结构介绍</a></li>
+<li><a href="http://magnushoff.com/jpeg-orientation.html" target="_blank" rel="external">Exif orientation介绍</a></li>
+<li><a href="http://www.impulseadventure.com/photo/exif-orientation.html" target="_blank" rel="external">JPEG Rotation and EXIF Orientation</a></li>
+</ul>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2017/03/26/减少APK大小/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="show pull-right" href="/2017/04/30/高斯模糊/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/category/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+      <div class="fexo-comments comments-post">
+    
+
+    
+
+
+
+
+    
+
+  </div>
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>
