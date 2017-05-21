@@ -22,7 +22,7 @@
 <meta property="og:url" content="http://xiazdong.github.io/2017/05/17/Timber/index.html">
 <meta property="og:site_name" content="xiazdong">
 <meta property="og:description" content="在Android开发中，打日志、crash上报、统计DAU等功能是很常见的。使用系统提供的Log类打日志很方便，但是他有一些不方便：  每次需要加TAG。 不会打印当前线程。 不会打印当前行号。  而Timber很简单的解决了这些问题。 Bugly是腾讯的一款crash上报和运营统计的平台。APP的crash上报和统计DAU等功能可以通过该平台实现，集成很简单，见Bugly Android SDK">
-<meta property="og:updated_time" content="2017-05-21T10:00:49.000Z">
+<meta property="og:updated_time" content="2017-05-21T10:03:34.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Timber和Bugly使用入门">
 <meta name="twitter:description" content="在Android开发中，打日志、crash上报、统计DAU等功能是很常见的。使用系统提供的Log类打日志很方便，但是他有一些不方便：  每次需要加TAG。 不会打印当前线程。 不会打印当前行号。  而Timber很简单的解决了这些问题。 Bugly是腾讯的一款crash上报和运营统计的平台。APP的crash上报和统计DAU等功能可以通过该平台实现，集成很简单，见Bugly Android SDK">
@@ -183,7 +183,7 @@
 <li>不会打印当前行号。</li>
 </ul>
 <p>而<a href="https://github.com/JakeWharton/timber" target="_blank" rel="external">Timber</a>很简单的解决了这些问题。</p>
-<p>Bugly是腾讯的一款crash上报和运营统计的平台。APP的crash上报和统计DAU等功能可以通过该平台实现，集成很简单，见<a href="https://bugly.qq.com/docs/user-guide/instruction-manual-android/?v=20170517185032" target="_blank" rel="external">Bugly Android SDK 使用指南</a>。</p>
+<p><a href="https://bugly.qq.com" target="_blank" rel="external">Bugly</a>是腾讯的一款crash上报和运营统计的平台。APP的crash上报和统计DAU等功能可以通过该平台实现，集成很简单，见<a href="https://bugly.qq.com/docs/user-guide/instruction-manual-android/?v=20170517185032" target="_blank" rel="external">Bugly Android SDK 使用指南</a>。</p>
 <p>Timber的配置方法：build.gradle中加入 <code>compile &#39;com.jakewharton.timber:timber:4.5.1&#39;</code>。</p>
 <p>Timber提供了DebugTree，只需要在Application的onCreate()中调用<code>Timber.plant(new DebugTree())</code>初始化Timber。但是DebugTree的功能还有所欠缺，比如：</p>
 <ul>
