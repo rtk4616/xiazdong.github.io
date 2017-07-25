@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>Android图像处理-简单的实时肤色变换实现 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="前言肤色变换是一件非常有意思的事情，问题的定义是：给定一张图片且图中只有一个人，一个目标颜色（Target Color），将图中人的肤色变为目标颜色。比如图中有一个白人，目标颜色设为c，经过肤色变换，图中白人的肤色就自然的过渡为c。 看到这个问题，凭空想觉得方法非常简单，无非两步：（1）检测出皮肤区域（2）对皮肤区域进行颜色变换。但在实现过程中会有几个问题：  肤色检测不准确。 如果只是纯粹把肤色">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Android图像处理-简单的实时肤色变换实现">
+<meta property="og:url" content="http://xiazdong.github.io/2017/07/25/skin-transfer/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="前言肤色变换是一件非常有意思的事情，问题的定义是：给定一张图片且图中只有一个人，一个目标颜色（Target Color），将图中人的肤色变为目标颜色。比如图中有一个白人，目标颜色设为c，经过肤色变换，图中白人的肤色就自然的过渡为c。 看到这个问题，凭空想觉得方法非常简单，无非两步：（1）检测出皮肤区域（2）对皮肤区域进行颜色变换。但在实现过程中会有几个问题：  肤色检测不准确。 如果只是纯粹把肤色">
+<meta property="og:image" content="http://ac-HSNl7zbI.clouddn.com/HKJ8HKJCbJAyXIKPeW6FzUUxbXT38DPOSlV7q4lw.jpg">
+<meta property="og:image" content="http://ac-HSNl7zbI.clouddn.com/LcOBt1QHFx8vMpB2rJ4PF4j16KD0Y2nnc9MEOIS1.jpg">
+<meta property="og:image" content="http://ac-HSNl7zbI.clouddn.com/gECM9DyOn6pI099VTT7wKagVzPkSi8ew2VLMmPfe.jpg">
+<meta property="og:image" content="http://ac-HSNl7zbI.clouddn.com/HtCbgKVB5vzXf5uohnmb2k42puuznIHgALaCDWfn.jpg">
+<meta property="og:image" content="http://ac-HSNl7zbI.clouddn.com/UecnHe8HO751bs1URSHXQTpt9Si6bdfCJUpAUEQ4.jpg">
+<meta property="og:image" content="http://ac-HSNl7zbI.clouddn.com/aJ1S7A3H50c14WsA454tiGnGmD2UQ1MR7Msw2zF7.jpg">
+<meta property="og:image" content="http://ac-HSNl7zbI.clouddn.com/XyIYjPwj0w9Y1bDXFFQvyYLpkQhCaMzvjRgADtJI.jpg">
+<meta property="og:image" content="http://ac-HSNl7zbI.clouddn.com/gMVvoPlI24TDvyLzuFd1GU4CC1QfFHwB03b2JMrS.jpg">
+<meta property="og:image" content="http://ac-HSNl7zbI.clouddn.com/dIOqHqiyHcn95kVtPwkULYjnAyciEXXr2mDbDozb.jpg">
+<meta property="og:updated_time" content="2017-07-25T14:00:21.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Android图像处理-简单的实时肤色变换实现">
+<meta name="twitter:description" content="前言肤色变换是一件非常有意思的事情，问题的定义是：给定一张图片且图中只有一个人，一个目标颜色（Target Color），将图中人的肤色变为目标颜色。比如图中有一个白人，目标颜色设为c，经过肤色变换，图中白人的肤色就自然的过渡为c。 看到这个问题，凭空想觉得方法非常简单，无非两步：（1）检测出皮肤区域（2）对皮肤区域进行颜色变换。但在实现过程中会有几个问题：  肤色检测不准确。 如果只是纯粹把肤色">
+<meta name="twitter:image" content="http://ac-HSNl7zbI.clouddn.com/HKJ8HKJCbJAyXIKPeW6FzUUxbXT38DPOSlV7q4lw.jpg">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/tag/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#前言"><span class="toc-text">前言</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#流程图"><span class="toc-text">流程图</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#具体实现"><span class="toc-text">具体实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#统计人脸平均肤色"><span class="toc-text">统计人脸平均肤色</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#皮肤检测"><span class="toc-text">皮肤检测</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#肤色变换"><span class="toc-text">肤色变换</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#融合"><span class="toc-text">融合</span></a></li></ol></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-skin-transfer" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">Android图像处理-简单的实时肤色变换实现</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2017.07.25</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>肤色变换是一件非常有意思的事情，问题的定义是：给定一张图片且图中只有一个人，一个目标颜色（Target Color），将图中人的肤色变为目标颜色。比如图中有一个白人，目标颜色设为c，经过肤色变换，图中白人的肤色就自然的过渡为c。</p>
+<p>看到这个问题，凭空想觉得方法非常简单，无非两步：（1）检测出皮肤区域（2）对皮肤区域进行颜色变换。但在实现过程中会有几个问题：</p>
+<ul>
+<li>肤色检测不准确。</li>
+<li>如果只是纯粹把肤色区域直接变为目标颜色，会让皮肤失去皮肤纹理，变得很不真实。</li>
+</ul>
+<p>因此本文针对这些问题，实现了一个比较简单的肤色变换功能。</p>
+<h2 id="流程图"><a href="#流程图" class="headerlink" title="流程图"></a>流程图</h2><p>本文的肤色变换流程图如下图：</p>
+<p><img src="http://ac-HSNl7zbI.clouddn.com/HKJ8HKJCbJAyXIKPeW6FzUUxbXT38DPOSlV7q4lw.jpg" alt=""></p>
+<p>为了加快整个过程的处理速度，每个步骤的算法都是OpenGL Shader实现的，整体速度非常快。</p>
+<h2 id="具体实现"><a href="#具体实现" class="headerlink" title="具体实现"></a>具体实现</h2><h3 id="统计人脸平均肤色"><a href="#统计人脸平均肤色" class="headerlink" title="统计人脸平均肤色"></a>统计人脸平均肤色</h3><p>这个需要依赖现有的人脸检测库，获得人脸检测库返回的83个点后，利用83个点中的部分点画出人脸中的局部mask（此处并不需要很精确的获得整个人脸，只需要获得部分肯定为皮肤的光滑区域），具体方法为：利用第0到18点画出部分区域，然后扣除眼睛、鼻子、嘴巴区域。效果如下：</p>
+<p><img src="http://ac-HSNl7zbI.clouddn.com/LcOBt1QHFx8vMpB2rJ4PF4j16KD0Y2nnc9MEOIS1.jpg" alt=""></p>
+<p>接着统计Mask中白色区域的平均颜色，即获得了当前人脸的平均肤色，记为avgColor。</p>
+<h3 id="皮肤检测"><a href="#皮肤检测" class="headerlink" title="皮肤检测"></a>皮肤检测</h3><p>本文中，皮肤检测（Skin Detection）是基于像素的多尺度动态阈值算法，总共分为二步。</p>
+<p>第一步是皮肤检测算法，本文的皮肤检测是基于YCgCb颜色空间的多尺度动态阈值模型，生成SkinMask，该Mask的每个像素的取值为0到1，表示是皮肤的概率，该算法的特点：</p>
+<ul>
+<li>判断当前像素是否为皮肤不依赖其他像素，这也方便了我们实现为shader版本。</li>
+<li>动态阈值的意思是皮肤的判断基于当前人脸统计的平均肤色，而不是静态的模型，而是avgColor为中心的概率模型。</li>
+<li>多尺度的意思是对原图分别进行1/2，1/4，1/8的缩放，分别生成SkinMask后，再进行融合生成最终的SkinMask。</li>
+</ul>
+<p>效果如下：</p>
+<p><img src="http://ac-HSNl7zbI.clouddn.com/gECM9DyOn6pI099VTT7wKagVzPkSi8ew2VLMmPfe.jpg" alt=""></p>
+<blockquote>
+<p>后来发现利用深度学习构建卷积神经网络进行皮肤检测效果比基于像素的皮肤检测好。</p>
+</blockquote>
+<p>具体的fragment shader如下，其中x和y为avgColor的Cg和Cb分量值：</p>
+<figure class="highlight glsl"><table><tr><td class="code"><pre><div class="line"><span class="keyword">precision</span> <span class="keyword">highp</span> <span class="type">float</span>;</div><div class="line"><span class="keyword">varying</span> <span class="type">vec2</span> textureCoordinate;</div><div class="line"><span class="keyword">uniform</span> <span class="type">sampler2D</span> inputImageTexture;</div><div class="line"><span class="keyword">uniform</span> <span class="type">float</span> x;<span class="comment">//中心点x坐标</span></div><div class="line"><span class="keyword">uniform</span> <span class="type">float</span> y;<span class="comment">//中心点y坐标</span></div><div class="line"></div><div class="line"><span class="type">float</span> isSkinColor(<span class="type">vec4</span> color) &#123;</div><div class="line">  <span class="type">float</span> cg1 = <span class="built_in">dot</span>(<span class="type">vec3</span>(<span class="number">-81.085</span>,<span class="number">112.0</span>,<span class="number">-30.915</span>), color.rgb);</div><div class="line">  <span class="type">float</span> cb1 = <span class="built_in">dot</span>(<span class="type">vec3</span>(<span class="number">-37.797</span>,<span class="number">-74.203</span>,<span class="number">112.0</span>), color.rgb);</div><div class="line">  <span class="type">float</span> cg = cg1+<span class="number">128.0</span>-x;</div><div class="line">  <span class="type">float</span> cb = cb1+<span class="number">128.0</span>-y;</div><div class="line">  <span class="type">float</span> v = <span class="built_in">max</span>(<span class="built_in">sqrt</span>(cg*cg+cb*cb)<span class="number">-14.0</span>, <span class="number">0.0</span>);</div><div class="line">  <span class="type">float</span> s = <span class="built_in">pow</span>(<span class="number">2.718281828459</span>, -v / <span class="number">4.0</span>);</div><div class="line">  <span class="type">float</span> gray = <span class="built_in">dot</span>(<span class="type">vec3</span>(<span class="number">0.3</span>,<span class="number">0.6</span>,<span class="number">0.1</span>), color.rgb);</div><div class="line">  <span class="type">float</span> s1 = <span class="built_in">min</span>(<span class="number">1.0</span>, gray/<span class="number">0.25</span>);</div><div class="line">  s = s * (s1*s1);</div><div class="line">  s = <span class="built_in">min</span>(<span class="number">1.0</span>, s);</div><div class="line">  <span class="keyword">return</span> s;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="type">void</span> main()</div><div class="line">&#123;</div><div class="line">  <span class="type">vec4</span> texColor = <span class="built_in">texture2D</span>(inputImageTexture, textureCoordinate);</div><div class="line">  <span class="type">float</span> s = isSkinColor(texColor);</div><div class="line">  <span class="built_in">gl_FragColor</span> = <span class="type">vec4</span>(s,s,s, <span class="number">1.0</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>可以看出第一步获得的SkinMask可能是不精确的，如果背景有物体的颜色和当前人的肤色一样，会被认为是皮肤，为了让SkinMask更精确，我们需要使用人像分割技术（Fabby），把背景抠除。</p>
+<p>第二步是利用现有的Fabby库对原图做操作，将背景扣除，获得FabbyMask，效果如下：</p>
+<p><img src="http://ac-HSNl7zbI.clouddn.com/HtCbgKVB5vzXf5uohnmb2k42puuznIHgALaCDWfn.jpg" alt=""></p>
+<p>接着我们结合SkinMask和FabbyMask生成最终的FinalMask，效果如下：</p>
+<p><img src="http://ac-HSNl7zbI.clouddn.com/UecnHe8HO751bs1URSHXQTpt9Si6bdfCJUpAUEQ4.jpg" alt=""></p>
+<h3 id="肤色变换"><a href="#肤色变换" class="headerlink" title="肤色变换"></a>肤色变换</h3><p>肤色变换实际上是颜色变换（Color Transfer）的一种应用，最早的颜色变换论文是”Color Transfer Between Images”，该论文给定一张source image，给定一张target image，将source image的颜色基调变为target image的颜色基调。效果如下：</p>
+<p><img src="http://ac-HSNl7zbI.clouddn.com/aJ1S7A3H50c14WsA454tiGnGmD2UQ1MR7Msw2zF7.jpg" alt=""></p>
+<p>但是这篇论文中的颜色变换会对source image的整体颜色进行变换（global image recoloring），因此”Interactive Local Color Transfer Between Images”提出了局部颜色变换的概念，即对source image的一个部分进行颜色变换（尽量不改变其中的其他区域，实践证明效果一般，针对论文中的图片效果还不错）。该论文提出了一种交互式的局部颜色变换算法，先在source image中圈出一小块你需要变色的区域（不需要很精确，或指定一个颜色，记为sacolor），然后指定target color，接着该算法能自动将source image中越接近sacolor的颜色变换为target color。</p>
+<p>这篇论文也给出了将该算法应用到肤色变换的效果，如下：</p>
+<p><img src="http://ac-HSNl7zbI.clouddn.com/XyIYjPwj0w9Y1bDXFFQvyYLpkQhCaMzvjRgADtJI.jpg" alt=""></p>
+<p>我们这里实现的肤色变换算法就是基于这两篇论文，因此步骤为：</p>
+<ul>
+<li>获得sacolor：当前图片中人脸的肤色，该颜色我们已经在先前获得。</li>
+<li>指定targetcolor：目标颜色，下面指定为绿色。</li>
+<li>肤色变换，该算法基于LAB颜色空间。</li>
+</ul>
+<p>LAB中每个分量的含义如下：</p>
+<ul>
+<li>L表示亮度（0，100），其中0表示黑色，100表示白色。</li>
+<li>A表示红绿（-128，127），其中-128表示绿色，127表示红色。</li>
+<li>B表示黄蓝（-128，127），其中-128表示蓝色，127表示黄色。</li>
+</ul>
+<p>这里对其取值范围进行了一些转换，因此取值范围有些不同。</p>
+<p>RGB转LAB：</p>
+<figure class="highlight glsl"><table><tr><td class="code"><pre><div class="line"><span class="type">vec3</span> rgb2lab(<span class="type">vec4</span> color) &#123;</div><div class="line">  <span class="type">float</span> L = <span class="number">0.3811</span> * color.b + <span class="number">0.5783</span> * color.g + <span class="number">0.0402</span> * color.r;</div><div class="line">  <span class="type">float</span> M = <span class="number">0.1967</span> * color.b + <span class="number">0.7244</span> * color.g + <span class="number">0.0782</span> * color.r;</div><div class="line">  <span class="type">float</span> S = <span class="number">0.0241</span> * color.b + <span class="number">0.1288</span> * color.g + <span class="number">0.8444</span> * color.r;</div><div class="line">  <span class="keyword">if</span> (L == <span class="number">0.0</span>) L = <span class="number">1.0</span>;</div><div class="line">  <span class="keyword">if</span> (M == <span class="number">0.0</span>) M = <span class="number">1.0</span>;</div><div class="line">  <span class="keyword">if</span> (S == <span class="number">0.0</span>) S = <span class="number">1.0</span>;</div><div class="line">  L = <span class="built_in">log</span>(L);</div><div class="line">  M = <span class="built_in">log</span>(M);</div><div class="line">  S = <span class="built_in">log</span>(S);</div><div class="line"></div><div class="line">  <span class="type">float</span> ll = (L + M + S) / <span class="built_in">sqrt</span>(<span class="number">3.0</span>);</div><div class="line">  <span class="type">float</span> aa = (L + M - <span class="number">2.0</span> * S) / <span class="built_in">sqrt</span>(<span class="number">6.0</span>);</div><div class="line">  <span class="type">float</span> bb = (L - M) / <span class="built_in">sqrt</span>(<span class="number">2.0</span>);</div><div class="line">  <span class="keyword">return</span> <span class="type">vec3</span>(ll, aa, bb);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>LAB转RGB：</p>
+<figure class="highlight glsl"><table><tr><td class="code"><pre><div class="line"><span class="type">vec4</span> lab2rgb(<span class="type">vec3</span> lab) &#123;</div><div class="line">  <span class="type">float</span> L = lab.r / <span class="built_in">sqrt</span>(<span class="number">3.0</span>) + lab.g / <span class="built_in">sqrt</span>(<span class="number">6.0</span>) + lab.b / <span class="built_in">sqrt</span>(<span class="number">2.0</span>);</div><div class="line">  <span class="type">float</span> M = lab.r / <span class="built_in">sqrt</span>(<span class="number">3.0</span>) + lab.g / <span class="built_in">sqrt</span>(<span class="number">6.0</span>) - lab.b / <span class="built_in">sqrt</span>(<span class="number">2.0</span>);</div><div class="line">  <span class="type">float</span> S = lab.r / <span class="built_in">sqrt</span>(<span class="number">3.0</span>) - <span class="number">2.0</span> * lab.g / <span class="built_in">sqrt</span>(<span class="number">6.0</span>);</div><div class="line">  L = <span class="built_in">exp</span>(L);</div><div class="line">  M = <span class="built_in">exp</span>(M);</div><div class="line">  S = <span class="built_in">exp</span>(S);</div><div class="line">  <span class="type">float</span> b = <span class="number">4.4679</span> * L - <span class="number">3.5873</span> * M + <span class="number">0.1193</span> * S;</div><div class="line">  <span class="type">float</span> g = <span class="number">-1.2186</span> * L + <span class="number">2.3809</span> * M - <span class="number">0.1624</span> * S;</div><div class="line">  <span class="type">float</span> r = <span class="number">-0.0497</span> * L - <span class="number">0.2439</span> * M + <span class="number">1.2045</span> * S;</div><div class="line"></div><div class="line">  <span class="keyword">if</span> (b &gt; <span class="number">1.0</span>) b = <span class="number">1.0</span>;</div><div class="line">  <span class="keyword">if</span> (b &lt; <span class="number">0.0</span>) b = <span class="number">0.0</span>;</div><div class="line">  <span class="keyword">if</span> (g &gt; <span class="number">1.0</span>) g = <span class="number">1.0</span>;</div><div class="line">  <span class="keyword">if</span> (g &lt; <span class="number">0.0</span>) g = <span class="number">0.0</span>;</div><div class="line">  <span class="keyword">if</span> (r &gt; <span class="number">1.0</span>) r = <span class="number">1.0</span>;</div><div class="line">  <span class="keyword">if</span> (r &lt; <span class="number">0.0</span>) r = <span class="number">0.0</span>;</div><div class="line">  <span class="keyword">return</span> <span class="type">vec4</span>(r,g,b, <span class="number">1.0</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>接着就是颜色变换算法，该算法的思路为：对于原图的每个像素color，计算color与sacolor的距离，如果距离越近，那么变换成越接近targetcolor的颜色，否则，颜色改变越少。实现如下：</p>
+<figure class="highlight glsl"><table><tr><td class="code"><pre><div class="line"><span class="keyword">precision</span> <span class="keyword">highp</span> <span class="type">float</span>;</div><div class="line"><span class="keyword">varying</span> <span class="type">vec2</span> textureCoordinate;</div><div class="line"><span class="keyword">uniform</span> <span class="type">sampler2D</span> inputImageTexture;</div><div class="line"><span class="keyword">uniform</span> <span class="type">float</span> skinl;  <span class="comment">//当前人脸平均肤色的L分量</span></div><div class="line"><span class="keyword">uniform</span> <span class="type">float</span> skina;  <span class="comment">//当前人脸平均肤色的A分量</span></div><div class="line"><span class="keyword">uniform</span> <span class="type">float</span> skinb;  <span class="comment">//当前人脸平均肤色的B分量</span></div><div class="line"><span class="keyword">uniform</span> <span class="type">float</span> targetl;<span class="comment">//目标颜色的L分量</span></div><div class="line"><span class="keyword">uniform</span> <span class="type">float</span> targeta;<span class="comment">//目标颜色的A分量</span></div><div class="line"><span class="keyword">uniform</span> <span class="type">float</span> targetb;<span class="comment">//目标颜色的B分量</span></div><div class="line"></div><div class="line"><span class="type">vec3</span> rgb2lab(<span class="type">vec4</span> color) &#123;</div><div class="line">    ...</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="type">vec4</span> lab2rgb(<span class="type">vec3</span> lab) &#123;</div><div class="line">    ...</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="type">float</span> euclidean(<span class="type">vec3</span> e1, <span class="type">vec3</span> e2) &#123;</div><div class="line">    <span class="keyword">return</span> <span class="built_in">sqrt</span>((e1.r - e2.r) * (e1.r - e2.r) + (e1.g - e2.g) * (e1.g - e2.g) + (e1.b - e2.b) * (e1.b - e2.b));</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="type">void</span> main()</div><div class="line">&#123;</div><div class="line">    <span class="type">vec4</span> texColor = <span class="built_in">texture2D</span>(inputImageTexture, textureCoordinate);</div><div class="line">    <span class="type">vec3</span> lab = rgb2lab(texColor);</div><div class="line">    <span class="type">vec3</span> skin = <span class="type">vec3</span>(skinl, skina, skinb);</div><div class="line">    <span class="type">float</span> <span class="built_in">distance</span> = euclidean(lab, skin);</div><div class="line">    <span class="built_in">distance</span> = <span class="built_in">distance</span> / <span class="number">5.0</span>;</div><div class="line">    <span class="type">float</span> f = <span class="number">1.0</span> / <span class="built_in">exp</span>(<span class="number">3.0</span> * <span class="built_in">distance</span> * <span class="built_in">distance</span>);</div><div class="line">    <span class="type">vec3</span> result_lab;</div><div class="line">    result_lab.r = lab.r + f * (targetl - skinl);</div><div class="line">    result_lab.g = lab.g + f * (targeta - skina);</div><div class="line">    result_lab.b = lab.b + f * (targetb - skinb);</div><div class="line">    <span class="built_in">gl_FragColor</span> = lab2rgb(result_lab);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>效果如下：</p>
+<p><img src="http://ac-HSNl7zbI.clouddn.com/gMVvoPlI24TDvyLzuFd1GU4CC1QfFHwB03b2JMrS.jpg" alt=""></p>
+<p>论文中指出，颜色变换比较适合景色的颜色变换，对肤色变换效果不一定很理想。</p>
+<h3 id="融合"><a href="#融合" class="headerlink" title="融合"></a>融合</h3><p>最后用FinalMask对TransferImg进行过滤，最后生成的效果如下：</p>
+<p><img src="http://ac-HSNl7zbI.clouddn.com/dIOqHqiyHcn95kVtPwkULYjnAyciEXXr2mDbDozb.jpg" alt=""></p>
+<p>效果看起来还可以，但是边界处的变化较为明显，比较突兀。</p>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2017/06/15/android-fragment/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="hide pull-right" href="/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/tag/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>
