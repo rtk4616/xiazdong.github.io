@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+
+
+  <html class="light page-post">
+
+
+<head>
+  <meta charset="utf-8">
+  
+  <title>EventBus 3.0 最佳实践和原理浅析 | xiazdong</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+
+  
+    <meta name="keywords" content="Android," />
+  
+
+  <meta name="description" content="基本介绍EventBus，中文名叫事件总线，他的定义如下：  Android optimized event bus that simplifies communication between Activities, Fragments, Threads, Services, etc.  可以看出，EventBus能够简化同一个进程的组件（比如Activity, Fragment, 线程, Ser">
+<meta name="keywords" content="Android">
+<meta property="og:type" content="article">
+<meta property="og:title" content="EventBus 3.0 最佳实践和原理浅析">
+<meta property="og:url" content="http://xiazdong.github.io/2017/08/02/eventbus3/index.html">
+<meta property="og:site_name" content="xiazdong">
+<meta property="og:description" content="基本介绍EventBus，中文名叫事件总线，他的定义如下：  Android optimized event bus that simplifies communication between Activities, Fragments, Threads, Services, etc.  可以看出，EventBus能够简化同一个进程的组件（比如Activity, Fragment, 线程, Ser">
+<meta property="og:updated_time" content="2017-08-02T13:51:43.000Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="EventBus 3.0 最佳实践和原理浅析">
+<meta name="twitter:description" content="基本介绍EventBus，中文名叫事件总线，他的定义如下：  Android optimized event bus that simplifies communication between Activities, Fragments, Threads, Services, etc.  可以看出，EventBus能够简化同一个进程的组件（比如Activity, Fragment, 线程, Ser">
+
+  
+
+  
+    <link rel="icon" href="/favicon.ico">
+  
+
+  <link href="/css/styles.css?v=c114cbe6" rel="stylesheet">
+
+
+  
+    <link rel="stylesheet" href="/css/personal-style.css">
+  
+
+  
+
+  
+
+  
+
+
+  
+    <script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+  
+
+  
+    <link rel="stylesheet" href="//cdn.bootcss.com/font-awesome/4.3.0/css/font-awesome.min.css">
+  
+</head>
+
+<body>
+
+
+  
+    <span id="toolbox-mobile" class="toolbox-mobile">盒子</span>
+  
+
+  <div class="post-header CENTER">
+   
+  <div class="toolbox">
+    <a class="toolbox-entry" href="/">
+      <span class="toolbox-entry-text">盒子</span>
+      <i class="icon-angle-down"></i>
+      <i class="icon-home"></i>
+    </a>
+    <ul class="list-toolbox">
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/archives/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            博客
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/tag/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            分类
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/about/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            关于
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/atom.xml"
+            rel="noopener noreferrer"
+            target="_blank"
+            >
+            RSS
+          </a>
+        </li>
+      
+        <li class="item-toolbox">
+          <a
+            class="CIRCLE"
+            href="/search/"
+            rel="noopener noreferrer"
+            target="_self"
+            >
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  </div>
+
+
+</div>
+
+
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#基本介绍"><span class="toc-text">基本介绍</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#基本使用"><span class="toc-text">基本使用</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#基本原理"><span class="toc-text">基本原理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#参考文献"><span class="toc-text">参考文献</span></a></li></ol>
+  </div>
+
+
+
+<div class="content content-post CENTER">
+   <article id="post-eventbus3" class="article article-type-post" itemprop="blogPost">
+  <header class="article-header">
+    <h1 class="post-title">EventBus 3.0 最佳实践和原理浅析</h1>
+
+    <div class="article-meta">
+      <span>
+        <i class="icon-calendar"></i>
+        <span>2017.08.02</span>
+      </span>
+
+      
+        <span class="article-author">
+          <i class="icon-user"></i>
+          <span>xiazdong</span>
+        </span>
+      
+
+      
+
+
+      
+
+      
+      <i class="fa fa-eye"></i> 
+        <span id="busuanzi_container_page_pv">
+           &nbsp热度 <span id="busuanzi_value_page_pv">
+           <i class="fa fa-spinner fa-spin"></i></span>℃
+        </span>
+      
+
+      
+
+      
+    </div>
+  </header>
+
+  <div class="article-content">
+    
+      <h2 id="基本介绍"><a href="#基本介绍" class="headerlink" title="基本介绍"></a>基本介绍</h2><p>EventBus，中文名叫事件总线，他的定义如下：</p>
+<blockquote>
+<p>Android optimized event bus that simplifies communication between Activities, Fragments, Threads, Services, etc.</p>
+</blockquote>
+<p>可以看出，EventBus能够简化同一个进程的组件（比如Activity, Fragment, 线程, Service）之间的通信。</p>
+<blockquote>
+<p>EventBus只支持同一个进程内的通信，如果要跨进程通信，请使用<a href="https://github.com/elemers/HermesEventBus" target="_blank" rel="external">HermesEventBus</a>。</p>
+</blockquote>
+<p>2016年2月份发布了EventBus 3.0，相比原来有两大优化点：</p>
+<ul>
+<li>EventBus 2.x中，订阅方法的方法名一定要以onEvent开头，比如onEventMainThread表示订阅方法执行在主线程；而EventBus 3.0中，订阅方法的方法名随意，只需要在前面加上注解：@Subscribe。</li>
+<li>通过注解方式声明订阅方法，速度相比2.x会变慢，通过引入注解处理器（annotation processor），在编译期间建立订阅方法的索引，性能有明显提升。</li>
+</ul>
+<blockquote>
+<p>根据官方说明，注解的引入让EventBus 3.0相比2.x性能变差3-5倍，但是引入索引，3.0相比2.x性能提高至少3倍。</p>
+</blockquote>
+<p>如果不引入索引，只需要在build.gradle加入：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">compile <span class="string">'org.greenrobot:eventbus:3.0.0'</span></div></pre></td></tr></table></figure>
+<p>在proguard添加：</p>
+<figure class="highlight"><table><tr><td class="code"><pre><div class="line">-keepattributes *Annotation*</div><div class="line">-keepclassmembers class ** &#123;</div><div class="line">    @org.greenrobot.eventbus.Subscribe &lt;methods&gt;;</div><div class="line">&#125;</div><div class="line">-keep enum org.greenrobot.eventbus.ThreadMode &#123; *; &#125;</div><div class="line"></div><div class="line"># Only required if you use AsyncExecutor</div><div class="line">-keepclassmembers class * extends org.greenrobot.eventbus.util.ThrowableFailureEvent &#123;</div><div class="line">    &lt;init&gt;(java.lang.Throwable);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>但是引入索引能够大幅提高性能，因此一般建议加入，在build.gradle加入：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">android &#123;</div><div class="line">    ...</div><div class="line">    javaCompileOptions &#123;</div><div class="line">        annotationProcessorOptions &#123;</div><div class="line">            arguments = [eventBusIndex: <span class="string">"com.xiazdong.eventbusdemo.EventBusIndex"</span>]   <span class="comment">//生成的索引文件名</span></div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line">dependencies &#123;</div><div class="line">    compile <span class="string">'org.greenrobot:eventbus:3.0.0'</span></div><div class="line">    annotationProcessor  <span class="string">'org.greenrobot:eventbus-annotation-processor:3.0.1'</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>然后在Application的onCreate()中加入：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">EventBus.builder().addIndex(<span class="keyword">new</span> EventBusIndex()).installDefaultEventBus();</div></pre></td></tr></table></figure>
+<p>编译之后，索引文件在<code>build/generated/source/apt/debug/com/xiazdong/eventbusdemo/EventBusIndex.java</code>。</p>
+<h2 id="基本使用"><a href="#基本使用" class="headerlink" title="基本使用"></a>基本使用</h2><p>EventBus的使用一共3个步骤：</p>
+<ul>
+<li>定义事件（Event），事件就是EventBus中相互传递的对象（类似于Intent中的Bundle）。</li>
+<li>发送事件（Publisher）。</li>
+<li>订阅事件，实现订阅方法（Subscriber）。</li>
+</ul>
+<p>首先是定义事件：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">MessageEvent</span> </span>&#123;</div><div class="line">    <span class="keyword">public</span> String name;</div><div class="line">    <span class="keyword">public</span> <span class="keyword">int</span> age;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="title">MessageEvent</span><span class="params">(String name, <span class="keyword">int</span> age)</span> </span>&#123;</div><div class="line">        <span class="keyword">this</span>.name = name;</div><div class="line">        <span class="keyword">this</span>.age = age;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这样事件传递的对象就是MessageEvent，里面包含name和age。</p>
+<p>接着，发送事件：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">EventBus.getDefault().post(<span class="keyword">new</span> MessageEvent(<span class="string">"xiazdong"</span>, <span class="number">25</span>));</div></pre></td></tr></table></figure>
+<p>这个post()方法可以在任意线程调用。</p>
+<p>EventBus还支持粘性事件，一般来说，在post()之前订阅该事件才会收到事件，但是粘性事件为：发送事件（postSticky()）之后再订阅事件也能收到该事件。</p>
+<p>最后订阅事件：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">XActivity</span> <span class="keyword">extends</span> <span class="title">AppCompatActivity</span> </span>&#123;</div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onCreate</span><span class="params">(Bundle savedInstanceState)</span> </span>&#123;</div><div class="line">        ...</div><div class="line">        EventBus.getDefault().register(<span class="keyword">this</span>);  <span class="comment">//注册了才能接收订阅</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Subscribe</span>(threadMode = ThreadMode.MAIN, priority = <span class="number">5</span>, sticky = <span class="keyword">false</span>)</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">onMessageReceived</span><span class="params">(MessageEvent event)</span> </span>&#123;</div><div class="line">        Log.i(TAG, event.name + <span class="string">","</span> + event.age);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="meta">@Override</span></div><div class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title">onDestroy</span><span class="params">()</span> </span>&#123;</div><div class="line">        EventBus.getDefault().unregister(<span class="keyword">this</span>); <span class="comment">//取消注册</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>onMessageReceived()就是订阅方法，threadMode有四种取值：</p>
+<ul>
+<li>ThreadMode.POSTING：默认值，post()在哪个线程调用，订阅方法就执行在哪个线程，不能执行耗时操作。</li>
+<li>ThreadMode.MAIN：订阅方法执行在主线程，用于更新UI。</li>
+<li>ThreadMode.BACKGROUND：如果post()在主线程调用，则订阅方法执行在某个固定后台线程（标记为BACKGROUND的订阅方法都执行在该线程）；如果post()在子线程调用，则订阅方法在该线程调用。不能执行耗时操作。</li>
+<li>ThreadMode.ASYNC：新建线程执行订阅方法，可以执行耗时操作。</li>
+</ul>
+<p>priority是优先级，值越大优先级越高，默认值为0。</p>
+<p>如果是粘性事件，需要加：sticky = true。</p>
+<p>EventBus这种通信方式的好处是：传递的内容可以是任意的，不像Intent中的Bundle只支持基本类型和实现了Parcelable的类型。</p>
+<p>LocalBroadcastManager（本地广播）是Android Support包提供的类，用于同一进程内的通信，是阉割版的EventBus，性能和加入编译时索引的EventBus差不多，相比EventBus有几个缺点：</p>
+<ul>
+<li>通过Intent的Bundle传递数据，数据类型只能是基本类型或实现Parcelable接口。EventBus能传递任何对象。</li>
+<li>onReceive()只能在主线程运行。EventBus的订阅方法能通过配置运行在主线程或子线程。</li>
+<li>使用麻烦。</li>
+</ul>
+<p>因此建议使用EventBus。</p>
+<h2 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h2><p>我们先从编译时生成的索引类（这里类名为EventBusIndex）开始讲起，该类是的作用是：收集所有订阅方法的信息，并保存到SUBSCRIBER_INDEX变量中，该变量是Map，key为类名，value为SubscriberInfo对象（实际为实现SubscriberInfo接口的SimpleSubscriberInfo对象）。需要注意：</p>
+<ul>
+<li>SimpleSubscriberInfo对象包含了：类名、该类中所有的订阅方法（SubscriberMethodInfo对象）、该类的父类的SubscriberInfo对象。</li>
+<li>一个SubscriberMethodInfo对象包含了一个订阅方法的信息，包含了方法名、threadMode值、事件类型（即订阅方法的参数类型）、priority值、sticky值。</li>
+<li>EventBusIndex的getSubscriberInfo()能通过订阅者类返回SubscriberInfo对象。</li>
+</ul>
+<p>我们先分析Application中的语句：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line">EventBus.builder().addIndex(<span class="keyword">new</span> EventBusIndex()).installDefaultEventBus();</div></pre></td></tr></table></figure>
+<p>EventBus类是核心类，整个原理的分析全部围绕他，EventBusBuilder类是构造EventBus对象的类。通过为EventBusBuilder设置一些配置（比如是否需要忽略索引类，即ignoreGeneratedIndex变量，默认为false），然后调用build()就构造出了一个EventBus对象。</p>
+<p>EventBus.builder()创建了EventBusBuilder对象，addIndex(new EventBusIndex())将索引类对象设置到EventBusBuilder对象的subscriberInfoIndexes变量中，installDefaultEventBus()为根据EventBusBuilder的配置构建一个EventBus对象，并设置到EventBus类的defaultInstance变量中。</p>
+<p>未来的EventBus.getDefault()都会获得Application中配置的新的EventBus对象。</p>
+<p>EventBus整个注册、发送、接收过程，最关键的变量为：</p>
+<ul>
+<li><code>Map&lt;Class&lt;?&gt;, CopyOnWriteArrayList&lt;Subscription&gt;&gt; subscriptionsByEventType</code>：key为事件类型，value为List<subscription>，即该事件类型对应的所有订阅方法（顺序按优先级排序），Subscription类包含了订阅者类和一个SubscriberMethod对象（包含了订阅方法的信息，和SubscriberMethodInfo差不多）。</subscription></li>
+<li><code>Map&lt;Object, List&lt;Class&lt;?&gt;&gt;&gt; typesBySubscriber</code>：key为订阅者类名，value为该订阅者类中所有的事件类型。</li>
+<li><code>Map&lt;Class&lt;?&gt;, List&lt;SubscriberMethod&gt;&gt; METHOD_CACHE</code>：key为订阅者类名，value为该类中所有的订阅方法信息。这是缓存类，用于缓存通过索引或反射查找到的结果。</li>
+<li><code>SubscriberMethodFinder subscriberMethodFinder</code>：其中的findSubscriberMethods()根据订阅者类获得该类中所有的订阅方法信息。</li>
+</ul>
+<p>注册：即调用EventBus的register()，即注册订阅者的所有订阅事件，代码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">register</span><span class="params">(Object subscriber)</span> </span>&#123;</div><div class="line">    Class&lt;?&gt; subscriberClass = subscriber.getClass();</div><div class="line">    List&lt;SubscriberMethod&gt; subscriberMethods = subscriberMethodFinder.findSubscriberMethods(subscriberClass);</div><div class="line">    <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</div><div class="line">        <span class="keyword">for</span> (SubscriberMethod subscriberMethod : subscriberMethods) &#123;</div><div class="line">            subscribe(subscriber, subscriberMethod);</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>该方法先通过subscriberMethodFinder的findSubscriberMethods()根据订阅者类名查找到该类的所有订阅方法信息（List<subscribermethod>），然后调用subscribe()把这些信息填充到subscriptionsByEventType和typesBySubscriber中。</subscribermethod></p>
+<p>SubscriberMethodFinder类中的findSubscriberMethods()代码如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function">List&lt;SubscriberMethod&gt; <span class="title">findSubscriberMethods</span><span class="params">(Class&lt;?&gt; subscriberClass)</span> </span>&#123;</div><div class="line">    <span class="comment">//从METHOD_CACHE中查找结果</span></div><div class="line">    List&lt;SubscriberMethod&gt; subscriberMethods = METHOD_CACHE.get(subscriberClass);</div><div class="line">    <span class="keyword">if</span> (subscriberMethods != <span class="keyword">null</span>) &#123;</div><div class="line">        <span class="keyword">return</span> subscriberMethods;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span> (ignoreGeneratedIndex) &#123;</div><div class="line">        subscriberMethods = findUsingReflection(subscriberClass); <span class="comment">//通过注解反射查找结果</span></div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        subscriberMethods = findUsingInfo(subscriberClass); <span class="comment">//从索引类中查找结果</span></div><div class="line">    &#125;</div><div class="line">    <span class="keyword">if</span> (subscriberMethods.isEmpty()) &#123;</div><div class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> EventBusException(<span class="string">"Subscriber "</span> + subscriberClass</div><div class="line">                + <span class="string">" and its super classes have no public methods with the @Subscribe annotation"</span>);</div><div class="line">    &#125; <span class="keyword">else</span> &#123;</div><div class="line">        METHOD_CACHE.put(subscriberClass, subscriberMethods);  <span class="comment">//把结果放入METHOD_CACHE中，避免下次再一次查找</span></div><div class="line">        <span class="keyword">return</span> subscriberMethods;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>该方法先后通过几种方法查找订阅方法信息：</p>
+<ul>
+<li>METHOD_CACHE：存放以前查找过的结果，避免下次重复查找。</li>
+<li>判断ignoreGeneratedIndex：是否忽略生成的索引类，该值默认为false，也建议为false，因此我们只考虑else分支。</li>
+<li><code>findUsingInfo()</code>：先从索引类中查找结果，如果找不到，再通过反射（<code>findUsingReflectionInSingleClass()</code>）查找结果。</li>
+<li>如果查找到结果，就放入METHOD_CACHE缓存，避免下次重复查找。</li>
+</ul>
+<p>因此索引类的引入主要减少了register()的耗时，即用编译时生成索引的方式代替了方法反射，前面说的EventBus 3.0相比EventBus 2.x速度提升至少3倍说的就是register()方法速度的提升。</p>
+<p>接着看unregister()，该方法就是将该订阅者相关的订阅事件信息和订阅方法信息等从subscriptionsByEventType和typesBySubscriber中删除。</p>
+<p>最后是post()，该方法用来发送订阅事件，并调用相关订阅者的订阅方法，具体怎么查找订阅者，是通过subscriptionsByEventType查找订阅者的订阅方法。具体在哪个线程调用订阅方法，通过订阅方法的threadMode声明确定。post()方法实现如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">post</span><span class="params">(Object event)</span> </span>&#123;</div><div class="line">    PostingThreadState postingState = currentPostingThreadState.get();</div><div class="line">    List&lt;Object&gt; eventQueue = postingState.eventQueue;</div><div class="line">    eventQueue.add(event);</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (!postingState.isPosting) &#123;</div><div class="line">        postingState.isMainThread = Looper.getMainLooper() == Looper.myLooper();</div><div class="line">        postingState.isPosting = <span class="keyword">true</span>;</div><div class="line">        <span class="keyword">if</span> (postingState.canceled) &#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> EventBusException(<span class="string">"Internal error. Abort state was not reset"</span>);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            <span class="keyword">while</span> (!eventQueue.isEmpty()) &#123;   <span class="comment">//依次发送队列中的事件</span></div><div class="line">                postSingleEvent(eventQueue.remove(<span class="number">0</span>), postingState);</div><div class="line">            &#125;</div><div class="line">        &#125; <span class="keyword">finally</span> &#123;</div><div class="line">            postingState.isPosting = <span class="keyword">false</span>;</div><div class="line">            postingState.isMainThread = <span class="keyword">false</span>;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>currentPostingThreadState变量是ThreadLocal<postingthreadstate>类型的，即每个线程都有一个PostingThreadState对象，该类结构为：</postingthreadstate></p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="keyword">final</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">PostingThreadState</span> </span>&#123;</div><div class="line">    <span class="keyword">final</span> List&lt;Object&gt; eventQueue = <span class="keyword">new</span> ArrayList&lt;Object&gt;();  <span class="comment">//事件队列</span></div><div class="line">    <span class="keyword">boolean</span> isPosting;      <span class="comment">//是否正在发送事件</span></div><div class="line">    <span class="keyword">boolean</span> isMainThread;  <span class="comment">//当前线程是否是主线程</span></div><div class="line">    …</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>post()共分为3步：</p>
+<ul>
+<li>把订阅事件信息放入eventQueue中，等待被执行。</li>
+<li>判断isPosting变量是否为true（即当前线程是否正在发送事件），如果为false，则置为true并循环遍历eventQueue，并调用postSingleEvent()发送订阅事件；否则直接返回，让当前正在遍历队列的对象执行订阅方法。</li>
+<li>最后把isPosting和isMainThread置为false。</li>
+</ul>
+<p>postSingleEvent()首先会寻找该订阅事件的所有父类，并依次发送这些事件和该订阅事件，即对每个订阅事件调用postSingleEventForEventType()，在postSingleEventForEventType()中通过subscriptionsByEventType查找到订阅事件对应的所有订阅方法，并对每个订阅方法调用postToSubscription()，该方法是EventBus调配订阅方法在哪个线程执行的核心方法，如下：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><div class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">postToSubscription</span><span class="params">(Subscription subscription, Object event, <span class="keyword">boolean</span> isMainThread)</span> </span>&#123;</div><div class="line">    <span class="keyword">switch</span> (subscription.subscriberMethod.threadMode) &#123;</div><div class="line">        <span class="keyword">case</span> POSTING:</div><div class="line">            invokeSubscriber(subscription, event);</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        <span class="keyword">case</span> MAIN:</div><div class="line">            <span class="keyword">if</span> (isMainThread) &#123;</div><div class="line">                invokeSubscriber(subscription, event);</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                mainThreadPoster.enqueue(subscription, event);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        <span class="keyword">case</span> BACKGROUND:</div><div class="line">            <span class="keyword">if</span> (isMainThread) &#123;</div><div class="line">                backgroundPoster.enqueue(subscription, event);</div><div class="line">            &#125; <span class="keyword">else</span> &#123;</div><div class="line">                invokeSubscriber(subscription, event);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        <span class="keyword">case</span> ASYNC:</div><div class="line">            asyncPoster.enqueue(subscription, event);</div><div class="line">            <span class="keyword">break</span>;</div><div class="line">        <span class="keyword">default</span>:</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> IllegalStateException(<span class="string">"Unknown thread mode: "</span> + subscription.subscriberMethod.threadMode);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这里有三种Poster，他们的共同点：内部都有PostPendingQueue和PendingPost，PostPendingQueue是存放PendingPost的队列，PendingPost存放了订阅事件和Subscription对象，即待调用的订阅方法。</p>
+<p>他们的不同点：</p>
+<ul>
+<li>mainThreadPoster是主线程的Handler，即在handleMessage中调用订阅方法；backgroundPoster和asyncPoster是Runnable，他们的run()会遍历PostPendingQueue队列，并调用订阅方法。</li>
+<li>backgroundPoster：和asyncPoster一起使用EventBus的executorService线程池。内部有executorRunning变量判断run()方法是否正在执行，如果正在执行，就只是把PendingPost放入队列，让当前的run()方法去调用该订阅方法。</li>
+<li>asyncPoster：使用EventBus的executorService线程池，每次都创建线程并调用订阅方法。</li>
+</ul>
+<p>对于threadMode的值分了四种情况：</p>
+<ul>
+<li>POSTING：invokeSubscriber()就是直接用反射调用订阅方法。</li>
+<li>MAIN：如果调用post()时就是主线程，那就直接反射调用订阅方法；否则就加入mainThreadPoster的队列。</li>
+<li>BACKGROUND：如果当前线程是主线程，那么加入backgroundPoster的队列；如果当前线程不是主线程，那么直接调用订阅方法。</li>
+<li>ASYNC：加入asyncPoster的队列。</li>
+</ul>
+<h2 id="参考文献"><a href="#参考文献" class="headerlink" title="参考文献"></a>参考文献</h2><ul>
+<li>入门：<a href="http://liuwangshu.cn/application/eventbus/1-eventbus.html" target="_blank" rel="external">http://liuwangshu.cn/application/eventbus/1-eventbus.html</a></li>
+<li>原理1：<a href="http://blog.csdn.net/u011240877/article/details/73196808" target="_blank" rel="external">http://blog.csdn.net/u011240877/article/details/73196808</a></li>
+<li>原理2：<a href="http://www.cnblogs.com/bugly/p/5475034.html" target="_blank" rel="external">http://www.cnblogs.com/bugly/p/5475034.html</a></li>
+<li>原理3：<a href="http://liuwangshu.cn/application/eventbus/2-eventbus-sourcecode.html" target="_blank" rel="external">http://liuwangshu.cn/application/eventbus/2-eventbus-sourcecode.html</a></li>
+<li>官方PPT：<a href="http://androiddevblog.com/wordpress/wp-content/uploads/EventBus3.pdf" target="_blank" rel="external">http://androiddevblog.com/wordpress/wp-content/uploads/EventBus3.pdf</a></li>
+</ul>
+
+    
+  </div>
+</article>
+
+
+   
+  <div class="text-center donation">
+    <div class="inner-donation">
+      <span class="btn-donation">支持一下</span>
+      <div class="donation-body">
+        <div class="tip text-center">扫一扫，支持xiazdong</div>
+        <ul class="theme.donation.items.length">
+        
+          <li class="item">
+            <img src="/images/qr-wechat.png" alt="">
+          </li>
+        
+          <li class="item">
+            <img src="/images/qr-alipay.png" alt="">
+          </li>
+        
+        </ul>
+      </div>
+    </div>
+  </div>
+
+
+   
+  <div class="box-prev-next clearfix">
+    <a class="show pull-left" href="/2017/07/25/skin-transfer/">
+        <i class="icon icon-angle-left"></i>
+    </a>
+    <a class="hide pull-right" href="/">
+        <i class="icon icon-angle-right"></i>
+    </a>
+  </div>
+
+
+
+
+</div>
+
+
+  <a id="backTop" class="back-top">
+    <i class="icon-angle-up"></i>
+  </a>
+
+
+
+
+  <div class="modal" id="modal">
+  <span id="cover" class="cover hide"></span>
+  <div id="modal-dialog" class="modal-dialog hide-dialog">
+    <div class="modal-header">
+      <span id="close" class="btn-close">关闭</span>
+    </div>
+    <hr>
+    <div class="modal-body">
+      <ul class="list-toolbox">
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/archives/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              博客
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/tag/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              分类
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/about/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              关于
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/atom.xml"
+              rel="noopener noreferrer"
+              target="_blank"
+              >
+              RSS
+            </a>
+          </li>
+        
+          <li class="item-toolbox">
+            <a
+              class="CIRCLE"
+              href="/search/"
+              rel="noopener noreferrer"
+              target="_self"
+              >
+              搜索
+            </a>
+          </li>
+        
+      </ul>
+
+    </div>
+  </div>
+</div>
+
+
+
+  
+
+  <script type="text/javascript">
+  function loadScript(url, callback) {
+    var script = document.createElement('script')
+    script.type = 'text/javascript';
+
+    if (script.readyState) { //IE
+      script.onreadystatechange = function() {
+        if (script.readyState == 'loaded' ||
+          script.readyState == 'complete') {
+          script.onreadystatechange = null;
+          callback();
+        }
+      };
+    } else { //Others
+      script.onload = function() {
+        callback();
+      };
+    }
+
+    script.src = url;
+    document.getElementsByTagName('head')[0].appendChild(script);
+  }
+
+  window.onload = function() {
+    loadScript('/js/bundle.js?235683', function() {
+      // load success
+    });
+  }
+</script>
+
+</body>
+</html>
