@@ -7,24 +7,25 @@
 <head>
   <meta charset="utf-8">
   
-  <title>ACM常用算法 | xiazdong</title>
+  <title>Android屏幕适配 | xiazdong</title>
 
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
 
   
-    <meta name="keywords" content="算法," />
+    <meta name="keywords" content="Android," />
   
 
-  <meta name="keywords" content="算法">
+  <meta name="description" content="基本知识 px(pixel, 像素): 这是设计领域最小的度量单位，因此像素必定是整数，比如 1px。 dp/dip(device independent pixel, 设备无关的像素): 这是 Android 独有的度量单位，这个度量单位出现的原因是：如果在开发中只规定像素，则会出现在分辨率高的手机上图很小，在分辨率低的手机上图很大。 in(inch, 英寸): 1 in=2.54 cm。 dp">
+<meta name="keywords" content="Android">
 <meta property="og:type" content="article">
-<meta property="og:title" content="ACM常用算法">
-<meta property="og:url" content="http://xiazdong.github.io/2012/11/04/ACM常用算法/index.html">
+<meta property="og:title" content="Android屏幕适配">
+<meta property="og:url" content="http://xiazdong.github.io/2014/07/08/android-screen/index.html">
 <meta property="og:site_name" content="xiazdong">
-<meta property="og:image" content="https://raw.githubusercontent.com/xiazdong/blog-image/master/acm_alg.jpg">
-<meta property="og:updated_time" content="2017-05-17T15:42:07.000Z">
+<meta property="og:description" content="基本知识 px(pixel, 像素): 这是设计领域最小的度量单位，因此像素必定是整数，比如 1px。 dp/dip(device independent pixel, 设备无关的像素): 这是 Android 独有的度量单位，这个度量单位出现的原因是：如果在开发中只规定像素，则会出现在分辨率高的手机上图很小，在分辨率低的手机上图很大。 in(inch, 英寸): 1 in=2.54 cm。 dp">
+<meta property="og:updated_time" content="2018-07-29T09:17:47.490Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="ACM常用算法">
-<meta name="twitter:image" content="https://raw.githubusercontent.com/xiazdong/blog-image/master/acm_alg.jpg">
+<meta name="twitter:title" content="Android屏幕适配">
+<meta name="twitter:description" content="基本知识 px(pixel, 像素): 这是设计领域最小的度量单位，因此像素必定是整数，比如 1px。 dp/dip(device independent pixel, 设备无关的像素): 这是 Android 独有的度量单位，这个度量单位出现的原因是：如果在开发中只规定像素，则会出现在分辨率高的手机上图很小，在分辨率低的手机上图很大。 in(inch, 英寸): 1 in=2.54 cm。 dp">
 
   
 
@@ -134,17 +135,22 @@
 </div>
 
 
+  <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#基本知识"><span class="toc-text">基本知识</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#常见面试题"><span class="toc-text">常见面试题</span></a></li></ol>
+  </div>
+
 
 
 <div class="content content-post CENTER">
-   <article id="post-ACM常用算法" class="article article-type-post" itemprop="blogPost">
+   <article id="post-android-screen" class="article article-type-post" itemprop="blogPost">
   <header class="article-header">
-    <h1 class="post-title">ACM常用算法</h1>
+    <h1 class="post-title">Android屏幕适配</h1>
 
     <div class="article-meta">
       <span>
         <i class="icon-calendar"></i>
-        <span>2012.11.04</span>
+        <span>2014.07.08</span>
       </span>
 
       
@@ -175,7 +181,70 @@
 
   <div class="article-content">
     
-      <p><img src="https://raw.githubusercontent.com/xiazdong/blog-image/master/acm_alg.jpg" alt=""></p>
+      <h2 id="基本知识"><a href="#基本知识" class="headerlink" title="基本知识"></a>基本知识</h2><ul>
+<li>px(pixel, 像素): 这是设计领域最小的度量单位，因此像素必定是整数，比如 1px。</li>
+<li>dp/dip(device independent pixel, 设备无关的像素): 这是 Android 独有的度量单位，这个度量单位出现的原因是：如果在开发中只规定像素，则会出现在分辨率高的手机上图很小，在分辨率低的手机上图很大。</li>
+<li>in(inch, 英寸): 1 in=2.54 cm。</li>
+<li>dpi(dots per inch)/ppi(pixels per inch): 一英寸中包含了几个像素，这表示屏幕的精细程度。这个可以通过”对角线的像素数(px)/屏幕对角线长度(inch)”得出。</li>
+<li>density: 密度，density=px/dp=dpi/160。</li>
+<li>sp: 与 dp 类似，但是用于字体。</li>
+<li>px=dp*density。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>屏幕</th>
+<th style="text-align:right">dpi范围</th>
+<th style="text-align:center">density</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ldpi</td>
+<td style="text-align:right">~120dpi</td>
+<td style="text-align:center">0.75</td>
+</tr>
+<tr>
+<td>mdpi</td>
+<td style="text-align:right">~160dpi</td>
+<td style="text-align:center">1</td>
+</tr>
+<tr>
+<td>hdpi</td>
+<td style="text-align:right">~240dpi</td>
+<td style="text-align:center">1.5</td>
+</tr>
+<tr>
+<td>xhdpi</td>
+<td style="text-align:right">~320dpi</td>
+<td style="text-align:center">2</td>
+</tr>
+<tr>
+<td>xxhdpi</td>
+<td style="text-align:right">~480dpi</td>
+<td style="text-align:center">3</td>
+</tr>
+<tr>
+<td>xxxhdpi</td>
+<td style="text-align:right">~640dpi</td>
+<td style="text-align:center">4</td>
+</tr>
+</tbody>
+</table>
+<p>当APP运行在某个手机上（假设是xhdpi），需要寻找名为back的图片，寻找规则：</p>
+<ul>
+<li>先去最匹配的目录找，即drawable-xhdpi。</li>
+<li>再去密度高的目录找，即drawble-xxhdpi, drawable-xxxhdpi，直到找到为止，并缩小对应的比例，比如xxxhdpi图片缩小2倍。</li>
+<li>再去drawable-nodpi找，nodpi的图片显示在任何屏幕都不做缩放。</li>
+<li>再去密度低的目录找，即drawable-hdpi, drawable-mdpi, drawable-ldpi，直到找到为止，并放大对应的比例，比如mdpi的图片放大2倍。</li>
+<li>缩放规则：scale=屏幕的density / 图片的density。目标大小=原来大小*scale。</li>
+</ul>
+<h2 id="常见面试题"><a href="#常见面试题" class="headerlink" title="常见面试题"></a>常见面试题</h2><p>问：图片为100px*100px，放在drawable-xhdpi中，当前设备是xxxhdpi和mdpi的效果？</p>
+<p>答：如果设备是xxxhdpi，根据公式，scale=4/2=2，即图片放大2倍，即图片显示的像素为200px*200px。如果设备是mdpi，根据公式，scale=1/2=0.5，即图片缩小2倍，即图片显示像素为50px*50px。</p>
+<p>问：180dp在xhdpi和hdpi中分别是多少像素？</p>
+<p>答：在xhdpi中，为180*2=360px；在hdpi中，为180*1.5=270px。</p>
+<p>问：180dp的方块，分别放在3.5寸、4寸、4.5寸的手机上（都是xhdpi），效果分别怎么样？</p>
+<p>答：因为三个手机都是xhdpi，因此密度一样，180dp的实际像素为360px，因此在三个手机上显示大小一样。</p>
 
     
   </div>
@@ -206,10 +275,10 @@
 
    
   <div class="box-prev-next clearfix">
-    <a class="hide pull-left" href="/">
+    <a class="show pull-left" href="/2012/11/04/ACM常用算法/">
         <i class="icon icon-angle-left"></i>
     </a>
-    <a class="show pull-right" href="/2014/07/08/android-screen/">
+    <a class="show pull-right" href="/2014/09/07/Android 性能优化：StrictMode/">
         <i class="icon icon-angle-right"></i>
     </a>
   </div>
